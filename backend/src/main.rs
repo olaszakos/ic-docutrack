@@ -4,12 +4,20 @@ use ic_cdk_macros::update;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use ic_cdk::export::{candid::CandidType};
-use std::any::TypeId;
+use serde::{Deserialize, Serialize};
 
-#[derive(CandidType)]
+#[derive(CandidType,Serialize,Deserialize)]
 struct User {
     first_name: String,
     last_name: String
+}
+
+#[derive(CandidType,Serialize,Deserialize)]
+enum WhoamiResponse {
+    #[serde(rename = "known_user")]
+    KnownUser(User),
+    #[serde(rename = "unknown_user")]
+    UnknownUser
 }
 
 thread_local! {
@@ -31,12 +39,12 @@ fn set_user(first_name: String, last_name: String) {
 }
 
 #[query]
-fn who_am_i() -> User {
+fn who_am_i() -> WhoamiResponse {
     USERS.with(|users| {
         let users = users.borrow();
         match users.get(&ic_cdk::api::caller()) {
-            None => User {first_name: "John".to_string(), last_name: "Doe".to_string()},
-            Some(User) => User {first_name: User.first_name.clone(), last_name: User.last_name.clone()}
+            None => WhoamiResponse::UnknownUser,
+            Some(user) => WhoamiResponse::KnownUser( User {first_name: user.first_name.clone(), last_name: user.last_name.clone()} )
         }    
     })
 }
