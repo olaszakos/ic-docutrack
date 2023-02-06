@@ -44,7 +44,7 @@ fn who_am_i() -> WhoamiResponse {
         let users = users.borrow();
         match users.get(&ic_cdk::api::caller()) {
             None => WhoamiResponse::UnknownUser,
-            Some(user) => WhoamiResponse::KnownUser( User {first_name: user.first_name.clone(), last_name: user.last_name.clone()} )
+            Some(user) => WhoamiResponse::KnownUser(user.clone())
         }    
     })
 }
