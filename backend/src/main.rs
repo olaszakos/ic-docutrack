@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 use ic_cdk::export::{candid::CandidType};
 use serde::{Deserialize, Serialize};
 
-#[derive(CandidType,Serialize,Deserialize)]
+#[derive(CandidType,Serialize,Deserialize,Clone)]
 struct User {
     first_name: String,
     last_name: String
