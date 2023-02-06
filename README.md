@@ -13,6 +13,7 @@ tbd
 ## Tests
 
 tbd
+We will test the following components
 
 ## Release
 
