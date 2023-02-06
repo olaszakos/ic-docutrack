@@ -8,7 +8,21 @@ The [doc](doc/) directory will contain a description of the high-level design of
 
 ## Implementation
 
-tbd
+To run the dapp, run the following in one terminal window:
+
+```
+dfx start --clean
+```
+
+And in another terminal"
+
+```
+# Install needed frontend dependencies.
+npm install
+
+# Deploy the canisters.
+dfx deploy
+```
 
 ## Tests
 
