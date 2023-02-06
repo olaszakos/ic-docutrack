@@ -11,11 +11,12 @@
     "frontend": {
       "type": "assets",
 
-      "__3": "NOTE: dfx will run 'npm run build' when the canister is to be built (dfx build or dfx deploy)",
-      "__4": "(which in this case populates 'dist/', see package.json).",
-      "__5": "source must be a directory, otherwise we get a cryptic error.",
+      "__1": "NOTE: dfx will run 'npm run build' when the canister is to be built (dfx build or dfx deploy)",
+      "__2": "(which in this case populates 'dist/', see package.json).",
+      "__3": "source must be a directory, otherwise we get a cryptic error.",
       "source": ["dist/"],
-      "__6": "NOTE: the 'frontend' signals dfx that it is useful to print out the front-end URL of this canister when deploying. It is not strictly required.",
+
+      "__4": "NOTE: the 'frontend' signals dfx that it is useful to print out the front-end URL of this canister when deploying. It is not strictly required.",
       "frontend": {}
     },
 
