@@ -1,3 +1,12 @@
+type user = record {
+  first_name: text;
+  last_name: text;
+}
+
 service docutrack : {
   hello_world : () -> (text);
+
+  set_user: (text, text) -> ();
+
+  who_am_i: () -> (user); 
 }
