@@ -1,7 +1,13 @@
+mod aliases;
+use crate::aliases::{AliasGenerator, Randomness};
 use ic_cdk::export::candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+
+thread_local! {
+    static STATE: RefCell<State> = RefCell::new(State::default());
+}
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct User {
@@ -51,7 +57,6 @@ pub enum UploadFileResponse {
     UploadOk,
 }
 
-#[derive(Default)]
 pub struct State {
     /// Keeps track of how many files have been requested so far
     /// and is used to assign IDs to newly requested files.
@@ -62,21 +67,23 @@ pub struct State {
     pub file_data: BTreeMap<u64, File>,
     /// Mapping between file aliases (randomly generated links) and file metadata.
     pub file_alias_index: BTreeMap<String, FileMetadata>,
+
+    // Generates aliases for file requests.
+    alias_generator: AliasGenerator,
 }
 
-impl State {
-    pub fn new() -> Self {
+impl Default for State {
+    fn default() -> Self {
         Self {
             file_count: 0,
             users: BTreeMap::new(),
             file_data: BTreeMap::new(),
             file_alias_index: BTreeMap::new(),
+            alias_generator: AliasGenerator::new(
+                Randomness::try_from(vec![0; 32].as_slice()).unwrap(),
+            ),
         }
     }
-}
-
-thread_local! {
-    static STATE: RefCell<State> = RefCell::new(State::new());
 }
 
 /// A helper method to read the state.
@@ -91,4 +98,9 @@ pub fn with_state<R>(f: impl FnOnce(&State) -> R) -> R {
 /// Precondition: the state is already initialized.
 pub fn with_state_mut<R>(f: impl FnOnce(&mut State) -> R) -> R {
     STATE.with(|cell| f(&mut cell.borrow_mut()))
+}
+
+/// Returns an unused file alias.
+pub fn generate_alias() -> String {
+    with_state_mut(|s| s.alias_generator.next())
 }

@@ -56,11 +56,6 @@ fn upload_file(file_id: u64, file_content: Vec<u8>) -> UploadFileResponse {
     })
 }
 
-/// Gets file alias randomly, to be filled in
-fn get_file_alias() -> String {
-    "random".to_string()
-}
-
 #[update]
 fn create_file_request(request_name: String) -> String {
     let crnt_file = with_state_mut(|s| {
@@ -78,14 +73,13 @@ fn create_file_request(request_name: String) -> String {
     with_state_mut(|s| {
         s.file_data.insert(crnt_file, file);
     });
-    let file_alias = get_file_alias();
-    let return_alias = file_alias.clone();
+    let alias = generate_alias();
+    // TODO: verify that file alias has not been used before.
     with_state_mut(|s| {
-        s.file_alias_index.insert(file_alias, file_metadata);
+        s.file_alias_index.insert(alias.clone(), file_metadata);
     });
 
-    // return dummy string for now
-    return_alias
+    alias
 }
 
 #[query]
