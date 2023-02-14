@@ -88,15 +88,15 @@ pub enum FileContent {
     },
     Uploaded {
         contents: Vec<u8>,
+        file_type: String,
         file_key: Vec<u8>,
     },
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq)]
 pub struct FileData {
-    #[serde(rename = "contents")]
     contents: Vec<u8>,
-    #[serde(rename = "file_key")]
+    file_type: String,
     file_key: Vec<u8>,
 }
 
@@ -217,4 +217,12 @@ pub enum GetUsersResponse {
     PermissionError,
     #[serde(rename = "users")]
     Users(Vec<UserData>),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct UploadFileRequest {
+    pub file_id: u64,
+    pub file_content: Vec<u8>,
+    pub file_type: String,
+    pub file_key: Vec<u8>,
 }
