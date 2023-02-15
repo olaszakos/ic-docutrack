@@ -40,7 +40,7 @@ fn upload_file(request: UploadFileRequest) -> Result<(), UploadFileError> {
             request.file_id,
             request.file_content,
             request.file_type,
-            request.user_key,
+            request.owner_key,
             s,
         )
     })
