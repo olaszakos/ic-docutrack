@@ -89,7 +89,8 @@ pub enum FileContent {
     Uploaded {
         contents: Vec<u8>,
         file_type: String,
-        file_key: Vec<u8>,
+        owner_key: Vec<u8>,
+        shared_keys: BTreeMap<Principal, Vec<u8>>,
     },
 }
 
@@ -97,7 +98,7 @@ pub enum FileContent {
 pub struct FileData {
     contents: Vec<u8>,
     file_type: String,
-    file_key: Vec<u8>,
+    user_key: Vec<u8>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, PartialEq, Debug)]
@@ -122,6 +123,8 @@ pub enum UploadFileError {
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq)]
 pub enum FileSharingResponse {
+    #[serde(rename = "pending_error")]
+    PendingError,
     #[serde(rename = "permission_error")]
     PermissionError,
     #[serde(rename = "ok")]
@@ -224,5 +227,5 @@ pub struct UploadFileRequest {
     pub file_id: u64,
     pub file_content: Vec<u8>,
     pub file_type: String,
-    pub file_key: Vec<u8>,
+    pub user_key: Vec<u8>,
 }
