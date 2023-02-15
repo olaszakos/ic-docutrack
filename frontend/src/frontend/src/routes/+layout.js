@@ -17,18 +17,8 @@ let backend = null;
 let auth = null;
 let isAuth = null;
 
-function printStatus() {
-  console.log("AuthClient: ", auth);
-  console.log("Actor: ", backend);
-  console.log("First name: ", first);
-  console.log("Last name: ", last);
-  console.log("Is authenticated: ", isAuth);
-}
-
 /** @type {import('./$types').PageLoad} */
 export async function load() {
-  console.log("Layout load started.");
-
   auth = await AuthClient.create();
   isAuth = await auth.isAuthenticated();
   if (isAuth) {
@@ -39,19 +29,15 @@ export async function load() {
     backend = createActor(canisterId, {
       agentOptions: { host, identity: auth.getIdentity() },
     });
-    printStatus();
     const record = await backend.who_am_i();
     if ("known_user" in record) {
       first = record.known_user.first_name;
       last = record.known_user.last_name;
     }
   }
-  printStatus();
   authClient.set(auth);
   actor.set(backend);
   firstName.set(first);
   lastName.set(last);
   isAuthenticated.set(isAuth);
-
-  console.log("Layout load ended.");
 }

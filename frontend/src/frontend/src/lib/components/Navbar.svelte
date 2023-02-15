@@ -59,7 +59,6 @@
       });
       isAuthenticated.set(await authClientValue.isAuthenticated());
       // Create an actor to interact with the IC for a particular canister ID
-      console.log('Principal: ', authClientValue.getIdentity().getPrincipal());
       actor.set(
         createActor(canisterId, {
           agentOptions: { host, identity: authClientValue.getIdentity() },

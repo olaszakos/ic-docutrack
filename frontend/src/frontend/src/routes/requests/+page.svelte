@@ -1,7 +1,6 @@
 <script>
-  import { Alert } from "sveltestrap";
   import { onMount } from "svelte";
-  import { AuthClient } from "@dfinity/auth-client";
+  import { page } from "$app/stores";
 
   import ContentTable from "$lib/components/ContentTable.svelte";
   import RequestModal from "$lib/components/RequestModal.svelte";
@@ -24,20 +23,20 @@
 
   async function syncBackend(backend) {
     if (backend) {
-      const fileData = await backend.get_files();
-      console.log("file data: ", fileData);
+      const fileData = await backend.get_requests();
       let newData = [];
       // Prepare data for page template
       for (let idx = 0; idx < fileData.length; ++idx) {
+        let detailsLink = new URL($page.url.origin + "/details");
+        detailsLink.searchParams.append("fileId", fileData[idx].file_id);
         newData.push({
           name: fileData[idx].file_name,
           access: "Only You",
-          items: [{ url: "/details/" + fileData[idx].file_id, text: "Open" }],
+          items: [{ url: detailsLink, text: "Open" }],
         });
       }
       // Assign `data` to itself for reactivity purposes
       data = newData;
-      console.log("Sync func: ", newData);
     } else {
       data = [];
     }

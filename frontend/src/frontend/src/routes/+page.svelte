@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { page } from "$app/stores";
   import {
     actor,
     isAuthenticated,
@@ -23,20 +24,20 @@
 
   async function syncBackend(backend) {
     if (backend) {
-      const fileData = await backend.get_files();
-      console.log("file data: ", fileData);
+      const fileData = await actorValue.get_requests();
       let newData = [];
       // Prepare data for page template
       for (let idx = 0; idx < fileData.length; ++idx) {
+        let detailsLink = new URL($page.url.origin + "/details");
+        detailsLink.searchParams.append("fileId", fileData[idx].file_id);
         newData.push({
           name: fileData[idx].file_name,
           access: "Only You",
-          items: [{ url: "/details/" + fileData[idx].file_id, text: "Open" }],
+          items: [{ url: detailsLink, text: "Open" }],
         });
       }
       // Assign `data` to itself for reactivity purposes
       data = newData;
-      console.log("Sync func: ", newData);
     } else {
       data = [];
     }
@@ -49,10 +50,7 @@
 
   // The vars are not persistent, hence they have to be reloaded `onMount`
   onMount(async () => {
-    console.log("Home onMount started.");
-    console.log("isAuth: ", isAuthenticatedValue);
     await syncBackend(actorValue);
-    console.log("Home onMount finished.");
   });
 </script>
 

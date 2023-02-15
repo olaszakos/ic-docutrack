@@ -1,13 +1,9 @@
 <script>
   import { page } from "$app/stores";
   import { onMount } from "svelte";
-  import { createActor } from "../../../../declarations/backend";
-  import FilePreview from "../../lib/components/FilePreview.svelte";
-  import {
-    actor,
-    isAuthenticated,
-    authClient,
-  } from "$lib/shared/stores/auth.js";
+  import FilePreview from "$lib/components/FilePreview.svelte";
+  import File from "$lib/file";
+  import { actor } from "$lib/shared/stores/auth.js";
 
   const alias = $page.url.searchParams.get("alias") || "";
 
@@ -23,7 +19,6 @@
 
   onMount(async () => {
     fileInfo = await actorValue.get_alias_info(alias);
-    console.log(fileInfo);
     loading = false;
   });
 
@@ -52,19 +47,24 @@
   const handleUpload = async () => {
     const fileSelector = document.getElementById("file-selector");
     const fileBytes = await fileSelector.files[0].arrayBuffer();
+    let fileToEncrypt = File.fromUnencrypted(fileInfo.Ok.file_name, fileBytes);
+    const encryptedFileKey = await fileToEncrypt.getEncryptedFileKey(
+      fileInfo.Ok.user.public_key.buffer
+    );
+    const encFile = await fileToEncrypt.encrypt();
     // Upload file
     uploadingStatus = "Uploading...";
-    const res = await actorValue.upload_file(
-      fileInfo.Ok.file_id,
-      new Uint8Array(fileBytes),
-      new Uint8Array([1, 2, 3])
-    );
+    const res = await actorValue.upload_file({
+      file_id: fileInfo.Ok.file_id,
+      file_content: new Uint8Array(encFile),
+      owner_key: new Uint8Array(encryptedFileKey),
+      file_type: file.dataType,
+    });
 
     if ("Ok" in res) {
       uploadingStatus = "File uploaded successfully.";
     } else {
       uploadingStatus = "An error occurred. Try again.";
-      console.log(res);
     }
   };
 </script>

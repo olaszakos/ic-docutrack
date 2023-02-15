@@ -1,8 +1,8 @@
 export const idlFactory = ({ IDL }) => {
   const file_id = IDL.Nat64;
   const found_file = IDL.Record({
-    contents: IDL.Vec(IDL.Nat8),
-    owner_key: IDL.Vec(IDL.Nat8),
+    'contents' : IDL.Vec(IDL.Nat8),
+    'owner_key' : IDL.Vec(IDL.Nat8),
     'file_type' : IDL.Text,
   });
   const download_file_response = IDL.Variant({
@@ -25,8 +25,8 @@ export const idlFactory = ({ IDL }) => {
     'Err' : IDL.Variant({ 'not_found' : IDL.Null }),
   });
   const file_status = IDL.Variant({
-    'pending' : IDL.Record({ 'alias' : IDL.Text }),
-    'uploaded' : IDL.Null,
+    'pending' : IDL.Record({ 'alias' : IDL.Text, 'requested_at' : IDL.Nat64 }),
+    'uploaded' : IDL.Record({ 'uploaded_at' : IDL.Nat64 }),
   });
   const file_metadata = IDL.Record({
     'file_status' : file_status,
@@ -49,7 +49,7 @@ export const idlFactory = ({ IDL }) => {
     'permission_error' : IDL.Null,
   });
   const upload_file_request = IDL.Record({
-    'file_key' : IDL.Vec(IDL.Nat8),
+    'owner_key' : IDL.Vec(IDL.Nat8),
     'file_type' : IDL.Text,
     'file_content' : IDL.Vec(IDL.Nat8),
     'file_id' : file_id,
@@ -63,9 +63,9 @@ export const idlFactory = ({ IDL }) => {
     'Err' : upload_file_error,
   });
   const upload_file_atomic_request = IDL.Record({
-    content: IDL.Vec(IDL.Nat8),
-    name: IDL.Text,
-    owner_key: IDL.Vec(IDL.Nat8),
+    'content' : IDL.Vec(IDL.Nat8),
+    'owner_key' : IDL.Vec(IDL.Nat8),
+    'name' : IDL.Text,
   });
   const who_am_i_response = IDL.Variant({
     'known_user' : IDL.Record({
@@ -78,12 +78,13 @@ export const idlFactory = ({ IDL }) => {
     'download_file' : IDL.Func([file_id], [download_file_response], []),
     'get_alias_info' : IDL.Func([IDL.Text], [get_alias_info_response], []),
     'get_requests' : IDL.Func([], [IDL.Vec(file_metadata)], []),
+    'get_shared_files' : IDL.Func([], [IDL.Vec(file_metadata)], []),
     'get_users' : IDL.Func([], [get_users_response], []),
     'hello_world' : IDL.Func([], [IDL.Text], []),
     'request_file' : IDL.Func([IDL.Text], [IDL.Text], []),
     'set_user' : IDL.Func([user], [], []),
     'share_file' : IDL.Func(
-        [IDL.Principal, file_id],
+        [IDL.Principal, file_id, IDL.Vec(IDL.Nat8)],
         [share_file_response],
         [],
       ),

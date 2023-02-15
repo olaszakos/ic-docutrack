@@ -16,11 +16,13 @@ export interface file_metadata {
   'shared_with' : Array<user>,
   'file_id' : file_id,
 }
-export type file_status = { 'pending' : { 'alias' : string } } |
-  { 'uploaded' : null };
+export type file_status = {
+    'pending' : { 'alias' : string, 'requested_at' : bigint }
+  } |
+  { 'uploaded' : { 'uploaded_at' : bigint } };
 export interface found_file {
-  contents: Uint8Array;
-  owner_key: Uint8Array;
+  'contents' : Uint8Array,
+  'owner_key' : Uint8Array,
   'file_type' : string,
 }
 export type get_alias_info_response = {
@@ -32,14 +34,14 @@ export type get_users_response = { 'permission_error' : null } |
 export type share_file_response = { 'ok' : null } |
   { 'permission_error' : null };
 export interface upload_file_atomic_request {
-  content: Uint8Array;
-  name: string;
-  owner_key: Uint8Array;
+  'content' : Uint8Array,
+  'owner_key' : Uint8Array,
+  'name' : string,
 }
 export type upload_file_error = { 'not_requested' : null } |
   { 'already_uploaded' : null };
 export interface upload_file_request {
-  'file_key' : Uint8Array,
+  'owner_key' : Uint8Array,
   'file_type' : string,
   'file_content' : Uint8Array,
   'file_id' : file_id,
@@ -65,11 +67,15 @@ export interface _SERVICE {
   'download_file' : ActorMethod<[file_id], download_file_response>,
   'get_alias_info' : ActorMethod<[string], get_alias_info_response>,
   'get_requests' : ActorMethod<[], Array<file_metadata>>,
+  'get_shared_files' : ActorMethod<[], Array<file_metadata>>,
   'get_users' : ActorMethod<[], get_users_response>,
   'hello_world' : ActorMethod<[], string>,
   'request_file' : ActorMethod<[string], string>,
   'set_user' : ActorMethod<[user], undefined>,
-  'share_file' : ActorMethod<[Principal, file_id], share_file_response>,
+  'share_file' : ActorMethod<
+    [Principal, file_id, Uint8Array],
+    share_file_response
+  >,
   'upload_file' : ActorMethod<[upload_file_request], upload_file_response>,
   'upload_file_atomic' : ActorMethod<[upload_file_atomic_request], undefined>,
   'who_am_i' : ActorMethod<[], who_am_i_response>,
