@@ -19,7 +19,7 @@ export interface file_metadata {
 export type file_status = {
     'pending' : { 'alias' : string, 'requested_at' : bigint }
   } |
-  { 'uploaded' : { 'uploaded_at' : bigint } };
+  { 'uploaded' : { 'document_key' : Uint8Array, 'uploaded_at' : bigint } };
 export interface found_file {
   'contents' : Uint8Array,
   'owner_key' : Uint8Array,
@@ -78,7 +78,7 @@ export interface _SERVICE {
   >,
   'share_file_with_users' : ActorMethod<
     [Array<Principal>, file_id, Array<Uint8Array>],
-    share_file_response
+    undefined
   >,
   'upload_file' : ActorMethod<[upload_file_request], upload_file_response>,
   'upload_file_atomic' : ActorMethod<[upload_file_atomic_request], undefined>,
