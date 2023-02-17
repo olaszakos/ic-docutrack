@@ -15,10 +15,6 @@
           <th scope="row">File Name</th>
           <td>{file.name}</td>
         </tr>
-        <tr>
-          <th scope="row">Owner</th>
-          <td> You </td>
-        </tr>
       </tbody>
     </Table>
   </Col>
