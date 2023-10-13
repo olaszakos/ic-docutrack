@@ -1,8 +1,5 @@
-import inject from "@rollup/plugin-inject";
 import { sveltekit } from "@sveltejs/kit/vite";
 import { readFileSync } from "fs";
-import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill";
-import { NodeModulesPolyfillPlugin } from "@esbuild-plugins/node-modules-polyfill";
 import { join } from "path";
 import type { UserConfig } from "vite";
 import { defineConfig, loadEnv } from "vite";
@@ -13,7 +10,7 @@ import { defineConfig, loadEnv } from "vite";
 // dfx deploy --network ic = ic
 const network = process.env.DFX_NETWORK ?? "local";
 const host = network === "local" ? "http://localhost:8000" : "https://ic0.app";
-const iiUrl = network === "local" ? "http://127.0.0.1:8000/?canisterId=r7inp-6aaaa-aaaaa-aaabq-cai" : "https://identity.ic0.app";
+const iiUrl = network === "local" ? "http://127.0.0.1:8000/?canisterId=rdmx6-jaaaa-aaaaa-aaadq-cai" : "https://identity.ic0.app";
 
 const readCanisterIds = ({
   prefix,

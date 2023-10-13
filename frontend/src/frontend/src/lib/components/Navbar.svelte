@@ -105,6 +105,10 @@
           </NavItem>
 
           <NavItem>
+            <NavLink href="/upload">Upload</NavLink>
+          </NavItem>
+
+          <NavItem>
             <NavLink href="/requests">Requests</NavLink>
           </NavItem>
 

@@ -10,6 +10,7 @@ pub struct UploadFileAtomicRequest {
     name: String,
     content: Vec<u8>,
     owner_key: Vec<u8>,
+    file_type: String,
 }
 
 pub fn upload_file_atomic(caller: Principal, request: UploadFileAtomicRequest, state: &mut State) {
@@ -27,8 +28,7 @@ pub fn upload_file_atomic(caller: Principal, request: UploadFileAtomicRequest, s
             },
             content: FileContent::Uploaded {
                 contents: request.content,
-                // TODO: fix this properly by updating the interface!
-                file_type: "not_yet_set".to_string(),
+                file_type: request.file_type,
                 owner_key: request.owner_key,
                 shared_keys: BTreeMap::new(),
             },
@@ -74,6 +74,7 @@ mod test {
                 name: "file_name".to_string(),
                 content: vec![1, 2, 3],
                 owner_key: vec![1, 2, 3],
+                file_type: "image/jpeg".to_string(),
             },
             &mut state,
         );
@@ -92,7 +93,7 @@ mod test {
                     },
                     content: FileContent::Uploaded {
                         contents: vec![1,2,3],
-                        file_type: "not_yet_set".to_string(),
+                        file_type: "image/jpeg".to_string(),
                         owner_key: vec![1,2,3],
                         shared_keys: BTreeMap::new()
                     }

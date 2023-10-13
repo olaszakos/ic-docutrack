@@ -1,6 +1,6 @@
 # ic-docutrack
 
-ic-docutrack is a proof a dapp to share documents in encrypted form with other people and track access control rights as well as confirmations to have seen them. It is being developed by DFINITY and Julius Baer.
+ic-docutrack is a proof-of-concept dapp for sharing documents in encrypted form with other people and track access control rights as well as confirmations to have seen them. It is being developed by DFINITY and Julius Baer.
 
 ## Documentation
 
@@ -21,20 +21,11 @@ And in another terminal"
 npm install -g pnpm
 pnpm install
 
-
 # Deploy the canisters.
 dfx deploy
+dfx deps deploy
 ```
 
-## Tests
-
-tbd
-We will test the following components
-
-## Release
-
-tbd
-
-## Contribution
+In your browser you can now go to <canister_id>.localhost:8000 to access the frontend.
 
 See our [CONTRIBUTING](.github/CONTRIBUTING.md) document to get started.

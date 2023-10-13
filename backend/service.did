@@ -70,6 +70,7 @@ type upload_file_error = variant {
 type upload_file_atomic_request = record {
   name: text;
   content: blob;
+  file_type: text;
   owner_key: blob;
 };
 

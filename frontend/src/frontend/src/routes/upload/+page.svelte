@@ -4,6 +4,7 @@
   import FilePreview from "$lib/components/FilePreview.svelte";
   import File from "$lib/file";
   import { actor } from "$lib/shared/stores/auth.js";
+  import crypto from "$lib/crypto";
 
   const alias = $page.url.searchParams.get("alias") || "";
 
@@ -49,26 +50,56 @@
     requestStatus = "Loading";
     const fileSelector = document.getElementById("file-selector");
     const fileBytes = await fileSelector.files[0].arrayBuffer();
-    let fileToEncrypt = File.fromUnencrypted(fileInfo.Ok.file_name, fileBytes);
+    const fileName = fileInfo?.Ok
+      ? fileInfo.Ok.file_name
+      : document.getElementById("file-name")?.value;
+
+    let fileToEncrypt = File.fromUnencrypted(fileName, fileBytes);
+
+    const userPublicKey = fileInfo?.Ok
+      ? fileInfo.Ok.user.public_key.buffer
+      : new Uint8Array(await crypto.getLocalUserPublicKey());
+
     const encryptedFileKey = await fileToEncrypt.getEncryptedFileKey(
-      fileInfo.Ok.user.public_key.buffer
+      userPublicKey
     );
+
     const encFile = await fileToEncrypt.encrypt();
     // Upload file
     uploadingStatus = "Uploading...";
-    const res = await actorValue.upload_file({
-      file_id: fileInfo.Ok.file_id,
-      file_content: new Uint8Array(encFile),
-      owner_key: new Uint8Array(encryptedFileKey),
-      file_type: file.dataType,
-    });
 
-    if ("Ok" in res) {
-      uploadingStatus = "File uploaded successfully.";
-      requestStatus = "Uploaded!";
+    if (fileInfo?.Ok) {
+      // Upload file for request.
+      const res = await actorValue.upload_file({
+        file_id: fileInfo.Ok.file_id,
+        file_content: new Uint8Array(encFile),
+        owner_key: new Uint8Array(encryptedFileKey),
+        file_type: file.dataType,
+      });
+
+      if ("Ok" in res) {
+        uploadingStatus = "File uploaded successfully.";
+        requestStatus = "Uploaded!";
+      } else {
+        uploadingStatus = "An error occurred. Try again.";
+        requestStatus = "";
+      }
     } else {
-      uploadingStatus = "An error occurred. Try again.";
-      requestStatus = "";
+      // Upload file atomically.
+      try {
+        await actorValue.upload_file_atomic({
+          content: new Uint8Array(encFile),
+          owner_key: new Uint8Array(encryptedFileKey),
+          name: fileName,
+          file_type: file.dataType,
+        });
+
+        uploadingStatus = "File uploaded successfully.";
+        requestStatus = "Uploaded!";
+      } catch (err) {
+        uploadingStatus = "An error occurred. Try again.";
+        requestStatus = "";
+      }
     }
   };
 </script>
@@ -76,9 +107,17 @@
 <h1>File Upload</h1>
 {#if loading}
   <p>Loading...</p>
-{:else if fileInfo.Ok}
-  <p>File name: {fileInfo.Ok.file_name}</p>
+{:else}
+  {#if fileInfo.Ok}
+    <p>File name: {fileInfo.Ok.file_name}</p>
+  {/if}
   <form class="row g3" on:submit|preventDefault={handleUpload}>
+    {#if !fileInfo.Ok}
+      <div class="col-auto">
+        <label for="file-name">File Name:</label>
+        <input name="file-name" type="text" id="file-name" required />
+      </div>
+    {/if}
     <div class="col-auto">
       <input
         bind:files
@@ -91,7 +130,9 @@
     </div>
     <div class="col-auto">
       {#if requestStatus}
-        <button class="btn btn-primary" type="submit" disabled>{requestStatus}</button>
+        <button class="btn btn-primary" type="submit" disabled
+          >{requestStatus}</button
+        >
       {:else}
         <button class="btn btn-primary" type="submit">Upload</button>
       {/if}
@@ -103,8 +144,4 @@
     <h4>File Preview</h4>
     <FilePreview {file} />
   {/if}
-{:else if "not_found" in fileInfo.Err}
-  <p>Unknown alias.</p>
-{:else}
-  <p>Something else is wrong.</p>
 {/if}

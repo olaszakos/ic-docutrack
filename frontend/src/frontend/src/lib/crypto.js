@@ -24,7 +24,7 @@ async function getLocalUserPublicKey() {
   this.publicKey = await keyStorage.loadKey("public");
   this.privateKey = await keyStorage.loadKey("private");
 
-  if (!publicKey || !privateKey) {
+  if (!this.publicKey || !this.privateKey) {
     const keypair = await subtle.generateKey(
       {
         name: "RSA-OAEP",

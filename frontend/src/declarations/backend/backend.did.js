@@ -64,6 +64,7 @@ export const idlFactory = ({ IDL }) => {
     'content' : IDL.Vec(IDL.Nat8),
     'owner_key' : IDL.Vec(IDL.Nat8),
     'name' : IDL.Text,
+    'file_type' : IDL.Text,
   });
   const who_am_i_response = IDL.Variant({
     'known_user' : IDL.Record({

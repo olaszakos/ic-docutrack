@@ -2,7 +2,7 @@ name: CI Checks
 
 env:
   RUST_VERSION: 1.67.0
-  DFX_VERSION: 0.12.1
+  DFX_VERSION: 0.15.0
 
 on:
   push:
@@ -150,6 +150,8 @@ jobs:
         run: |
           dfx start --background
           dfx canister create --all
-          dfx deploy internet_identity
-          npm install
-          npm run build
+          dfx deps pull
+          dfx deps deploy
+          npm install -g pnpm
+          pnpm install
+          pnpm run build

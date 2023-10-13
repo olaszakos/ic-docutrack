@@ -4,6 +4,7 @@
     "frontend"
   ],
   "scripts": {
-    "build": "npm run build --workspace frontend"
+    "dev": "cd frontend; pnpm run dev",
+    "build": "cd frontend; pnpm run build"
   }
 }

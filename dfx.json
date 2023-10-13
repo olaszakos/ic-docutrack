@@ -1,5 +1,5 @@
 {
-  "dfx": "0.12.1",
+  "dfx": "0.15.0",
   "canisters": {
     "backend": {
       "type": "rust",
@@ -9,8 +9,8 @@
         "node_compatibility": true
       }
     },
-
     "frontend": {
+      "build": "pnpm run build",
       "dependencies": ["backend"],
       "frontend": {
         "entrypoint": "frontend/build/index.html"
@@ -23,17 +23,8 @@
     },
 
     "internet_identity": {
-      "type": "custom",
-      "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2023-01-31/internet_identity.did",
-      "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2023-01-31/internet_identity_dev.wasm",
-      "declarations": {
-        "node_compatibility": true
-      },
-      "remote": {
-        "id": {
-          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
-        }
-      }
+        "type": "pull",
+        "id": "rdmx6-jaaaa-aaaaa-aaadq-cai"
     }
   },
   "defaults": {
