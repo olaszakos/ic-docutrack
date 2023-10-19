@@ -45,6 +45,7 @@ type found_file = record {
   contents: blob;
   file_type: text;
   owner_key: blob;
+  num_chunks: nat64;
 };
 
 type download_file_response = variant {
@@ -72,6 +73,13 @@ type upload_file_atomic_request = record {
   content: blob;
   file_type: text;
   owner_key: blob;
+  num_chunks: nat64;
+};
+
+type upload_file_continue_request = record {
+  file_id: file_id;
+  chunk_id: nat64;
+  contents: blob;
 };
 
 type share_file_response = variant {
@@ -89,6 +97,7 @@ type upload_file_request = record {
   file_content: blob;
   file_type: text;
   owner_key: blob;
+  num_chunks: nat64;
 };
 
 service docutrack : {
@@ -108,13 +117,15 @@ service docutrack : {
 
   upload_file: (upload_file_request) -> (upload_file_response) ;
 
-  download_file: (file_id) -> (download_file_response) query;
+  download_file: (file_id, chunk_id: nat64) -> (download_file_response) query;
 
   get_requests: () -> (vec file_metadata) query;
 
   get_shared_files: () -> (vec file_metadata) query;
 
-  upload_file_atomic: (upload_file_atomic_request) -> ();
+  upload_file_atomic: (upload_file_atomic_request) -> (file_id);
+
+  upload_file_continue: (upload_file_continue_request) -> ();
 
   share_file: (user_id: principal, file_id: file_id, file_key_encrypted_for_user: blob) -> (share_file_response);
 

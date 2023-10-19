@@ -4,6 +4,7 @@ export const idlFactory = ({ IDL }) => {
     'contents' : IDL.Vec(IDL.Nat8),
     'owner_key' : IDL.Vec(IDL.Nat8),
     'file_type' : IDL.Text,
+    'num_chunks' : IDL.Nat64,
   });
   const download_file_response = IDL.Variant({
     'found_file' : found_file,
@@ -49,6 +50,7 @@ export const idlFactory = ({ IDL }) => {
   const upload_file_request = IDL.Record({
     'owner_key' : IDL.Vec(IDL.Nat8),
     'file_type' : IDL.Text,
+    'num_chunks' : IDL.Nat64,
     'file_content' : IDL.Vec(IDL.Nat8),
     'file_id' : file_id,
   });
@@ -65,6 +67,12 @@ export const idlFactory = ({ IDL }) => {
     'owner_key' : IDL.Vec(IDL.Nat8),
     'name' : IDL.Text,
     'file_type' : IDL.Text,
+    'num_chunks' : IDL.Nat64,
+  });
+  const upload_file_continue_request = IDL.Record({
+    'contents' : IDL.Vec(IDL.Nat8),
+    'chunk_id' : IDL.Nat64,
+    'file_id' : file_id,
   });
   const who_am_i_response = IDL.Variant({
     'known_user' : IDL.Record({
@@ -74,7 +82,11 @@ export const idlFactory = ({ IDL }) => {
     'unknown_user' : IDL.Null,
   });
   return IDL.Service({
-    'download_file' : IDL.Func([file_id], [download_file_response], ['query']),
+    'download_file' : IDL.Func(
+        [file_id, IDL.Nat64],
+        [download_file_response],
+        ['query'],
+      ),
     'get_alias_info' : IDL.Func(
         [IDL.Text],
         [get_alias_info_response],
@@ -102,7 +114,12 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'upload_file' : IDL.Func([upload_file_request], [upload_file_response], []),
-    'upload_file_atomic' : IDL.Func([upload_file_atomic_request], [], []),
+    'upload_file_atomic' : IDL.Func(
+        [upload_file_atomic_request],
+        [file_id],
+        [],
+      ),
+    'upload_file_continue' : IDL.Func([upload_file_continue_request], [], []),
     'who_am_i' : IDL.Func([], [who_am_i_response], ['query']),
   });
 };

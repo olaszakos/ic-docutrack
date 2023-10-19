@@ -8,6 +8,8 @@
 
   const alias = $page.url.searchParams.get("alias") || "";
 
+  const chunkSize = 2000000;
+
   let loading = true;
   let uploadingStatus = "";
   let fileInfo = null;
@@ -47,7 +49,6 @@
   }
 
   const handleUpload = async () => {
-    requestStatus = "Loading";
     const fileSelector = document.getElementById("file-selector");
     const fileBytes = await fileSelector.files[0].arrayBuffer();
     const fileName = fileInfo?.Ok
@@ -65,41 +66,79 @@
     );
 
     const encFile = await fileToEncrypt.encrypt();
+    const content = new Uint8Array(encFile);
+
+    if (content.length > 20 * 1024 * 1024) {
+      alert("File can be at most 20MiB.");
+      return;
+    }
+
     // Upload file
     uploadingStatus = "Uploading...";
 
-    if (fileInfo?.Ok) {
-      // Upload file for request.
-      const res = await actorValue.upload_file({
-        file_id: fileInfo.Ok.file_id,
-        file_content: new Uint8Array(encFile),
-        owner_key: new Uint8Array(encryptedFileKey),
-        file_type: file.dataType,
-      });
+    requestStatus = "Loading";
 
-      if ("Ok" in res) {
-        uploadingStatus = "File uploaded successfully.";
-        requestStatus = "Uploaded!";
+    // Split file into chunks of 2MB.
+    const numChunks = Math.ceil(content.length / chunkSize);
+    console.log("num chunks: " + numChunks);
+
+    try {
+      if (fileInfo?.Ok) {
+        // Upload file for request.
+        const res = await actorValue.upload_file({
+          file_id: fileInfo.Ok.file_id,
+          file_content: content.subarray(0, chunkSize),
+          owner_key: new Uint8Array(encryptedFileKey),
+          file_type: file.dataType,
+          num_chunks: numChunks,
+        });
+
+        if ("Ok" in res) {
+          for (let i = 1; i < numChunks; i++) {
+            // Upload chunks
+            console.log("uploading chunk " + i);
+            await actorValue.upload_file_continue({
+              file_id: fileInfo.Ok.file_id,
+              contents: content.subarray(i * chunkSize, (i + 1) * chunkSize),
+              chunk_id: i,
+            });
+          }
+
+          uploadingStatus = "File uploaded successfully.";
+          requestStatus = "Uploaded!";
+        } else {
+          uploadingStatus = "An error occurred. Try again.";
+          requestStatus = "";
+        }
       } else {
-        uploadingStatus = "An error occurred. Try again.";
-        requestStatus = "";
-      }
-    } else {
-      // Upload file atomically.
-      try {
-        await actorValue.upload_file_atomic({
-          content: new Uint8Array(encFile),
+        // Upload file atomically.
+
+        const fileId = await actorValue.upload_file_atomic({
+          content: content.subarray(0, chunkSize),
           owner_key: new Uint8Array(encryptedFileKey),
           name: fileName,
           file_type: file.dataType,
+          num_chunks: numChunks,
         });
+        console.log("Uploaded file with id " + fileId);
+
+        for (let i = 1; i < numChunks; i++) {
+          // Upload chunks
+          console.log("uploading chunk " + i);
+          await actorValue.upload_file_continue({
+            file_id: fileId,
+            contents: content.subarray(i * chunkSize, (i + 1) * chunkSize),
+            chunk_id: i,
+          });
+        }
 
         uploadingStatus = "File uploaded successfully.";
         requestStatus = "Uploaded!";
-      } catch (err) {
-        uploadingStatus = "An error occurred. Try again.";
-        requestStatus = "";
       }
+    } catch (err) {
+      console.error(err);
+      uploadingStatus = "An error occurred. Try again.";
+      requestStatus = "";
     }
   };
 </script>

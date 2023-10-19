@@ -88,6 +88,13 @@ pub enum FileContent {
         owner_key: Vec<u8>,
         shared_keys: BTreeMap<Principal, Vec<u8>>,
     },
+    PartiallyUploaded {
+        num_chunks: u64,
+        contents: BTreeMap<u64, Vec<u8>>,
+        file_type: String,
+        owner_key: Vec<u8>,
+        shared_keys: BTreeMap<Principal, Vec<u8>>,
+    },
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq)]
@@ -95,6 +102,7 @@ pub struct FileData {
     contents: Vec<u8>,
     file_type: String,
     owner_key: Vec<u8>,
+    num_chunks: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, PartialEq, Debug)]
@@ -222,6 +230,14 @@ pub struct UploadFileRequest {
     pub file_content: Vec<u8>,
     pub file_type: String,
     pub owner_key: Vec<u8>,
+    pub num_chunks: u64,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct UploadFileContinueRequest {
+    pub file_id: u64,
+    pub chunk_id: u64,
+    pub contents: Vec<u8>,
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -245,4 +261,12 @@ fn get_randomness_seed() -> Vec<u8> {
 
 fn init_alias_generator() -> AliasGenerator {
     AliasGenerator::new(Randomness::try_from(get_randomness_seed().as_slice()).unwrap())
+}
+
+pub fn ceil_division(dividend: usize, divisor: usize) -> usize {
+    if dividend % divisor == 0 {
+        dividend / divisor
+    } else {
+        dividend / divisor + 1
+    }
 }

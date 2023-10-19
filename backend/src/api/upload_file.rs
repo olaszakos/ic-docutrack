@@ -6,6 +6,7 @@ pub fn upload_file(
     contents: Vec<u8>,
     file_type: String,
     owner_key: Vec<u8>,
+    num_chunks: u64,
     state: &mut State,
 ) -> Result<(), UploadFileError> {
     // Fetch the file.
@@ -19,16 +20,30 @@ pub fn upload_file(
     let alias = match file.content {
         FileContent::Pending { ref alias } => {
             let alias = alias.clone();
-            file.content = FileContent::Uploaded {
-                contents,
-                file_type,
-                owner_key,
-                shared_keys,
-            };
+            if num_chunks == 1 {
+                file.content = FileContent::Uploaded {
+                    contents,
+                    file_type,
+                    owner_key,
+                    shared_keys,
+                };
+            } else {
+                let mut content = BTreeMap::new();
+                content.insert(0, contents);
+                file.content = FileContent::PartiallyUploaded {
+                    contents: content,
+                    file_type,
+                    owner_key,
+                    shared_keys,
+                    num_chunks,
+                };
+            }
             file.metadata.uploaded_at = Some(get_time());
             alias
         }
-        FileContent::Uploaded { .. } => return Err(UploadFileError::AlreadyUploaded),
+        FileContent::Uploaded { .. } | FileContent::PartiallyUploaded { .. } => {
+            return Err(UploadFileError::AlreadyUploaded)
+        }
     };
 
     // The file is now uploaded. Delete the alias from the state.
@@ -77,6 +92,7 @@ mod test {
             vec![1, 2, 3],
             "jpeg".to_string(),
             vec![1, 2, 3],
+            1,
             &mut state,
         );
 

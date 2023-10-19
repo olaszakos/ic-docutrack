@@ -15,7 +15,9 @@ pub fn share_file(
     } else {
         let file = state.file_data.get_mut(&file_id).unwrap();
         match &mut file.content {
-            FileContent::Pending { .. } => FileSharingResponse::PendingError,
+            FileContent::Pending { .. } | FileContent::PartiallyUploaded { .. } => {
+                FileSharingResponse::PendingError
+            }
             FileContent::Uploaded { shared_keys, .. } => {
                 let file_shares = state
                     .file_shares
@@ -55,7 +57,9 @@ pub fn revoke_share(
                 arr.retain(|&val| val != file_id);
                 let file = state.file_data.get_mut(&file_id).unwrap();
                 match &mut file.content {
-                    FileContent::Pending { .. } => FileSharingResponse::PendingError,
+                    FileContent::Pending { .. } | FileContent::PartiallyUploaded { .. } => {
+                        FileSharingResponse::PendingError
+                    }
                     FileContent::Uploaded { shared_keys, .. } => {
                         shared_keys.remove(&sharing_with);
 
@@ -135,6 +139,7 @@ mod test {
             vec![1, 2, 3],
             "jpeg".to_string(),
             vec![1, 2, 3],
+            1,
             &mut state,
         );
         // share file with ID 0
@@ -151,6 +156,7 @@ mod test {
             vec![1, 2, 3],
             "jpeg".to_string(),
             vec![1, 2, 3],
+            1,
             &mut state,
         );
         // share file index 2
@@ -266,6 +272,7 @@ mod test {
             vec![1, 2, 3],
             "jpeg".to_string(),
             vec![1, 2, 3],
+            1,
             &mut state,
         );
         // share file index 0
@@ -282,6 +289,7 @@ mod test {
             vec![1, 2, 3],
             "jpeg".to_string(),
             vec![1, 2, 3],
+            1,
             &mut state,
         );
         // share file index 2

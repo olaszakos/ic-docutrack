@@ -1,49 +1,76 @@
+pub use crate::ceil_division;
 use crate::{FileContent, FileData, FileDownloadResponse, State};
 use ic_cdk::export::candid::Principal;
 
-fn get_file_data(s: &State, file_id: u64) -> FileDownloadResponse {
+const CHUNK_SIZE: usize = 2_000_000;
+
+fn get_file_data(s: &State, file_id: u64, chunk_id: u64) -> FileDownloadResponse {
+    let chunk_id: usize = chunk_id as usize;
+
     // unwrap is safe because we already know the file exists
     let this_file = s.file_data.get(&file_id).unwrap();
     match &this_file.content {
-        FileContent::Pending { .. } => FileDownloadResponse::NotUploadedFile,
+        FileContent::Pending { .. } | FileContent::PartiallyUploaded { .. } => {
+            FileDownloadResponse::NotUploadedFile
+        }
         FileContent::Uploaded {
             contents,
             file_type,
             owner_key,
             shared_keys: _,
         } => FileDownloadResponse::FoundFile(FileData {
-            contents: contents.clone(),
+            contents: contents
+                [chunk_id * CHUNK_SIZE..std::cmp::min((chunk_id + 1) * CHUNK_SIZE, contents.len())]
+                .to_vec(),
             file_type: file_type.clone(),
             owner_key: owner_key.clone(),
+            num_chunks: ceil_division(contents.len(), CHUNK_SIZE) as u64,
         }),
     }
 }
 
-fn get_shared_file_data(s: &State, file_id: u64, user: Principal) -> FileDownloadResponse {
+fn get_shared_file_data(
+    s: &State,
+    file_id: u64,
+    chunk_id: u64,
+    user: Principal,
+) -> FileDownloadResponse {
+    let chunk_id: usize = chunk_id as usize;
+
     // unwrap is safe because we already know the file exists
     let this_file = s.file_data.get(&file_id).unwrap();
     match &this_file.content {
-        FileContent::Pending { .. } => FileDownloadResponse::NotUploadedFile,
+        FileContent::Pending { .. } | FileContent::PartiallyUploaded { .. } => {
+            FileDownloadResponse::NotUploadedFile
+        }
         FileContent::Uploaded {
             contents,
             file_type,
             owner_key: _,
             shared_keys,
         } => FileDownloadResponse::FoundFile(FileData {
-            contents: contents.clone(),
+            contents: contents
+                [chunk_id * CHUNK_SIZE..std::cmp::min((chunk_id + 1) * CHUNK_SIZE, contents.len())]
+                .to_vec(),
             file_type: file_type.clone(),
             owner_key: shared_keys.get(&user).unwrap().clone(),
+            num_chunks: ceil_division(contents.len(), CHUNK_SIZE) as u64,
         }),
     }
 }
-pub fn download_file(s: &State, file_id: u64, caller: Principal) -> FileDownloadResponse {
+pub fn download_file(
+    s: &State,
+    file_id: u64,
+    chunk_id: u64,
+    caller: Principal,
+) -> FileDownloadResponse {
     match s.file_owners.get(&caller) {
         // This is the case where the files is owned by this user.
         Some(files) => match files.contains(&file_id) {
-            true => get_file_data(s, file_id),
+            true => get_file_data(s, file_id, chunk_id),
             false => {
                 if is_file_shared_with_me(s, file_id, caller) {
-                    get_shared_file_data(s, file_id, caller)
+                    get_shared_file_data(s, file_id, chunk_id, caller)
                 } else {
                     FileDownloadResponse::PermissionError
                 }
@@ -52,7 +79,7 @@ pub fn download_file(s: &State, file_id: u64, caller: Principal) -> FileDownload
         // But it could also be the case that the file is shared with this user.
         None => {
             if is_file_shared_with_me(s, file_id, caller) {
-                get_shared_file_data(s, file_id, caller)
+                get_shared_file_data(s, file_id, chunk_id, caller)
             } else {
                 FileDownloadResponse::PermissionError
             }
@@ -93,7 +120,7 @@ mod test {
         request_file(Principal::anonymous(), "request", &mut state);
 
         // try to download file as different user
-        let result = download_file(&state, 0, Principal::from_slice(&[0, 1, 2]));
+        let result = download_file(&state, 0, 0, Principal::from_slice(&[0, 1, 2]));
 
         assert!(result == FileDownloadResponse::PermissionError);
     }
@@ -131,7 +158,7 @@ mod test {
         request_file(Principal::from_slice(&[0, 1, 2]), "request4", &mut state);
 
         // try to download a file that belongs to another user
-        let result = download_file(&state, 3, Principal::anonymous());
+        let result = download_file(&state, 3, 0, Principal::anonymous());
 
         assert!(result == FileDownloadResponse::PermissionError);
     }
@@ -152,7 +179,7 @@ mod test {
         request_file(Principal::anonymous(), "request", &mut state);
 
         // try to download a file that was not uploaded yet
-        let result = download_file(&state, 0, Principal::anonymous());
+        let result = download_file(&state, 0, 0, Principal::anonymous());
 
         assert!(result == FileDownloadResponse::NotUploadedFile);
     }
@@ -181,15 +208,17 @@ mod test {
             vec![1, 2, 3],
             "jpeg".to_string(),
             vec![1, 2, 3],
+            1,
             &mut state,
         );
 
         assert_eq!(
-            download_file(&state, file_id, Principal::anonymous()),
+            download_file(&state, file_id, 0, Principal::anonymous()),
             FileDownloadResponse::FoundFile(FileData {
                 contents: vec![1, 2, 3],
                 file_type: "jpeg".to_string(),
                 owner_key: vec![1, 2, 3],
+                num_chunks: 1
             })
         );
     }
@@ -227,6 +256,7 @@ mod test {
             vec![1, 2, 3],
             "jpeg".to_string(),
             vec![1, 2, 3],
+            1,
             &mut state,
         );
 
@@ -240,11 +270,12 @@ mod test {
         );
 
         assert_eq!(
-            download_file(&state, 0, Principal::from_slice(&[0, 1, 2])),
+            download_file(&state, 0, 0, Principal::from_slice(&[0, 1, 2])),
             FileDownloadResponse::FoundFile(FileData {
                 contents: vec![1, 2, 3],
                 file_type: "jpeg".to_string(),
                 owner_key: vec![10, 11, 12],
+                num_chunks: 1
             })
         )
     }

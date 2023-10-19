@@ -51,14 +51,20 @@ fn upload_file(request: UploadFileRequest) -> Result<(), UploadFileError> {
             request.file_content,
             request.file_type,
             request.owner_key,
+            request.num_chunks,
             s,
         )
     })
 }
 
 #[update]
-fn upload_file_atomic(request: UploadFileAtomicRequest) {
+fn upload_file_atomic(request: UploadFileAtomicRequest) -> u64 {
     with_state_mut(|s| backend::api::upload_file_atomic(caller(), request, s))
+}
+
+#[update]
+fn upload_file_continue(request: UploadFileContinueRequest) {
+    with_state_mut(|s| backend::api::upload_file_continue(request, s))
 }
 
 #[update]
@@ -67,8 +73,8 @@ fn request_file(request_name: String) -> String {
 }
 
 #[query]
-fn download_file(file_id: u64) -> FileDownloadResponse {
-    with_state(|s| backend::api::download_file(s, file_id, caller()))
+fn download_file(file_id: u64, chunk_id: u64) -> FileDownloadResponse {
+    with_state(|s| backend::api::download_file(s, file_id, chunk_id, caller()))
 }
 
 #[update]

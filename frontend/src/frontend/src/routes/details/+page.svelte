@@ -44,8 +44,20 @@
       });
 
       if (!fileNotFound){
-        let downloadedFile = await actorValue.download_file(fileId);
+        let downloadedFile = await actorValue.download_file(fileId, 0);
         console.log(downloadedFile);
+
+        for (let i = 1; i < downloadedFile.found_file.num_chunks; i++) {
+          console.log("Downloading chunk " + i);
+          const chunk = (await actorValue.download_file(fileId, i)).found_file.contents;
+
+          const mergedArray = new Uint8Array(downloadedFile.found_file.contents.length + chunk.length);
+          mergedArray.set(downloadedFile.found_file.contents, 0);
+          mergedArray.set(chunk, downloadedFile.found_file.contents.length);
+
+          downloadedFile.found_file.contents = mergedArray;
+        }
+
         permissionError = downloadedFile.permission_error;
         if (!permissionError) {
           let decryptedFile = await File.fromEncrypted(

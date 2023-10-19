@@ -7,14 +7,40 @@ use super::user_info::get_user_key;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct UploadFileAtomicRequest {
-    name: String,
-    content: Vec<u8>,
-    owner_key: Vec<u8>,
-    file_type: String,
+    pub name: String,
+    pub content: Vec<u8>,
+    pub owner_key: Vec<u8>,
+    pub file_type: String,
+    pub num_chunks: u64,
 }
 
-pub fn upload_file_atomic(caller: Principal, request: UploadFileAtomicRequest, state: &mut State) {
+pub fn upload_file_atomic(
+    caller: Principal,
+    request: UploadFileAtomicRequest,
+    state: &mut State,
+) -> u64 {
     let file_id = state.generate_file_id();
+
+    let content = if request.num_chunks == 1 {
+        // File is uploaded in one chunk.
+        FileContent::Uploaded {
+            contents: request.content,
+            file_type: request.file_type,
+            owner_key: request.owner_key,
+            shared_keys: BTreeMap::new(),
+        }
+    } else {
+        // File will be uploaded in multiple chunks.
+        let mut contents = BTreeMap::new();
+        contents.insert(0, request.content);
+        FileContent::PartiallyUploaded {
+            num_chunks: request.num_chunks,
+            contents,
+            file_type: request.file_type,
+            owner_key: request.owner_key,
+            shared_keys: BTreeMap::new(),
+        }
+    };
 
     let old_value = state.file_data.insert(
         file_id,
@@ -26,12 +52,7 @@ pub fn upload_file_atomic(caller: Principal, request: UploadFileAtomicRequest, s
                 requested_at: get_time(),
                 uploaded_at: Some(get_time()),
             },
-            content: FileContent::Uploaded {
-                contents: request.content,
-                file_type: request.file_type,
-                owner_key: request.owner_key,
-                shared_keys: BTreeMap::new(),
-            },
+            content,
         },
     );
 
@@ -45,6 +66,8 @@ pub fn upload_file_atomic(caller: Principal, request: UploadFileAtomicRequest, s
         .entry(caller)
         .or_insert_with(Vec::new)
         .push(file_id);
+
+    file_id
 }
 
 #[cfg(test)]
@@ -71,6 +94,7 @@ mod test {
         upload_file_atomic(
             Principal::anonymous(),
             UploadFileAtomicRequest {
+                num_chunks: 1,
                 name: "file_name".to_string(),
                 content: vec![1, 2, 3],
                 owner_key: vec![1, 2, 3],
