@@ -1,14 +1,4 @@
 <script lang="ts">
-  import {
-    Collapse,
-    Navbar,
-    NavbarToggler,
-    NavbarBrand,
-    Nav,
-    NavItem,
-    NavLink,
-  } from "sveltestrap";
-
   import RegistrationModal from "$lib/components/RegistrationModal.svelte";
 
   import { createActor } from "../../../../declarations/backend";
@@ -19,7 +9,12 @@
     firstName,
     lastName,
     isAuthenticated,
-  } from "$lib/shared/stores/auth.js";
+  } from "$lib/shared/stores/auth";
+  import LogoIcon from "./icons/LogoIcon.svelte";
+  import IconFile from "./icons/IconFile.svelte";
+  import RequestsIcon from "./icons/RequestsIcon.svelte";
+  import LogoutIcon from "./icons/LogoutIcon.svelte";
+  import { page } from "$app/stores";
 
   let isOpen = false;
   let isOpenRegistrationModal = false;
@@ -66,6 +61,7 @@
       authClient.set(authClientValue);
 
       let record = await actorValue.who_am_i();
+
       if ("unknown_user" in record) {
         isOpenRegistrationModal = true;
       } else {
@@ -89,42 +85,63 @@
 </script>
 
 {#if isAuthenticatedValue !== null}
-  <Navbar color="light" light expand="md">
-    <NavbarBrand href="/">DocuTrack</NavbarBrand>
-    <NavbarToggler on:click={() => (isOpen = !isOpen)} />
-    <Collapse {isOpen} navbar expand="md" on:update={handleUpdate}>
+  <nav class="bg-background-200 rounded-b-3xl">
+    <div class="flex h-16 items-center max-w-5xl mx-auto px-4">
+      <a href="/">
+        <img src="/logo.svg" alt="" />
+      </a>
       {#if firstNameValue}
-        <Nav class="ms-md-3">
-          <NavItem>
+        <div class="flex ml-2">
+          <div class="bg-accent-100/10">
+            <div class="bg-background-200 w-3 h-full rounded-br-lg" />
+          </div>
+          <div
+            class="bg-accent-100/10 p-2 rounded-lg rounded-bl-none text-accent-100 body-1"
+          >
             Hi, {firstNameValue}
-          </NavItem>
-        </Nav>
-        <Nav class="ms-auto" navbar>
-          <NavItem>
-            <NavLink href="/">My Files</NavLink>
-          </NavItem>
-
-          <NavItem>
-            <NavLink href="/upload">Upload</NavLink>
-          </NavItem>
-
-          <NavItem>
-            <NavLink href="/requests">Requests</NavLink>
-          </NavItem>
-
-          <NavItem>
-            <NavLink on:click={handleLogout}>Logout</NavLink>
-          </NavItem>
-        </Nav>
-      {:else}
-        <Nav class="ms-auto" navbar>
-          <NavItem>
-            <!-- Add link to the II login -->
-            <NavLink on:click={handleLogin}>Login</NavLink>
-          </NavItem>
-        </Nav>
+          </div>
+        </div>
       {/if}
-    </Collapse>
-    <RegistrationModal isOpen={isOpenRegistrationModal} />
-  </Navbar>
+      <div class="flex-1" />
+      {#if $isAuthenticated === false}
+        <button class="btn btn-accent" on:click={handleLogin}>
+          <LogoIcon />
+          Login
+        </button>
+      {:else if $isAuthenticated === true}
+        <div class="flex gap-8">
+          <a
+            href="/"
+            class="btn btn-ghost"
+            class:btn-ghost-active={$page.route.id === "/"}
+          >
+            <IconFile />
+            Files</a
+          >
+          <a
+            href="/upload"
+            class="btn btn-ghost"
+            class:btn-ghost-active={$page.route.id === "/upload"}
+          >
+            <RequestsIcon />
+            Upload</a
+          >
+          <a
+            href="/requests"
+            class="btn btn-ghost"
+            class:btn-ghost-active={$page.route.id === "/requests"}
+          >
+            <RequestsIcon />
+            Requests</a
+          >
+          <button on:click={handleLogout} class="btn btn-ghost">
+            <LogoutIcon />
+            Logout</button
+          >
+        </div>
+      {/if}
+    </div>
+  </nav>
 {/if}
+
+<RegistrationModal isOpen={isOpenRegistrationModal} />

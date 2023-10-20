@@ -1,24 +1,42 @@
 <script lang="ts">
-  import { Button, Modal, ModalBody, ModalHeader, FormGroup, Label, Input } from "sveltestrap";
-  import { actor } from "$lib/shared/stores/auth.js";
+  import {
+    Button,
+    Modal,
+    ModalBody,
+    ModalHeader,
+    FormGroup,
+    Label,
+    Input,
+  } from "sveltestrap";
+  import { actor } from "$lib/shared/stores/auth";
   import { onMount } from "svelte";
-  import {default as crypto} from "$lib/crypto";
-  import SharedList from '$lib/components/SharedList.svelte'
+  import { default as crypto } from "$lib/crypto";
+  import SharedList from "$lib/components/SharedList.svelte";
+  import type { FileData } from "$lib/shared/types";
+  import type { ActorType } from "$lib/shared/actor";
+  import type { Principal } from "@dfinity/principal";
 
   export let isOpen = false;
-  export let fileData = {file_id: null, file_name: '', shared_with:[]};
+  export let fileData: FileData;
 
-  let shareWithPerson = null;
+  type User = {
+    ic_principal: Principal;
+    first_name: string;
+    last_name: string;
+    public_key: { buffer: ArrayBuffer };
+  };
+
+  let shareWithPerson: Principal | null = null;
   let expirationDate = null;
   let loading: boolean = false;
-  let users = [];
-  let oldSharedWith = [];
-  let newSharedWith = [];
+  let users: User[] = [];
+  let oldSharedWith: User[] = [];
+  let newSharedWith: User[] = [];
   let hasExpirationDate = false;
   const toggle = () => {
     isOpen = !isOpen;
   };
-  let actorValue: object;
+  let actorValue: ActorType;
   actor.subscribe((value) => (actorValue = value));
 
   function removeItem(arr, value) {
@@ -30,21 +48,28 @@
   }
 
   function addPersonToShare() {
-    if(shareWithPerson){
-    let res = users.find(obj => 
-      obj.ic_principal.compareTo(shareWithPerson) === 'eq'
-    );
-    if(res !== null && !newSharedWith.find(obj => obj.ic_principal.compareTo(shareWithPerson) === 'eq')) {
-      newSharedWith.push(res);
-      // Assign to itself for reactivity purposes
-      newSharedWith = newSharedWith;
+    if (shareWithPerson) {
+      let res = users.find(
+        (obj) => obj.ic_principal.compareTo(shareWithPerson!) === "eq"
+      );
+      if (
+        res &&
+        !newSharedWith.find(
+          (obj) => obj.ic_principal.compareTo(shareWithPerson!) === "eq"
+        )
+      ) {
+        newSharedWith.push(res);
+        // Assign to itself for reactivity purposes
+        newSharedWith = newSharedWith;
+      }
     }
-  }
   }
 
   function removePersonFromShare(principal) {
-    let user = newSharedWith.find(obj => obj.ic_principal.compareTo(principal) === 'eq');
-    if(user !== null) {
+    let user = newSharedWith.find(
+      (obj) => obj.ic_principal.compareTo(principal) === "eq"
+    );
+    if (user !== null) {
       newSharedWith = removeItem(newSharedWith, user);
       // Assign to itself for reactivity purposes
       newSharedWith = newSharedWith;
@@ -55,23 +80,38 @@
     loading = true;
     // If no expiration date is used, set to -1
     let timestamp = -1;
-    if(hasExpirationDate && expirationDate) {
+    if (hasExpirationDate && expirationDate) {
       // The expiration date is saved as timestamp in nanoseconds, convert accordingly
       timestamp = Date.parse(expirationDate) * 1e6;
     }
-    const documentKey = await crypto.decryptForUser(fileData.file_status.uploaded.document_key.buffer);
-    for(let i = 0; i < newSharedWith.length; i++) {
-      if(actorValue) {
-        const encryptedFileKey = await crypto.encryptForUser(documentKey, newSharedWith[i].public_key.buffer);
+    const documentKey = await crypto.decryptForUser(
+      fileData.file_status.uploaded.document_key.buffer
+    );
+    for (let i = 0; i < newSharedWith.length; i++) {
+      if (actorValue) {
+        const encryptedFileKey = await crypto.encryptForUser(
+          documentKey,
+          newSharedWith[i].public_key.buffer
+        );
         // TODO: add expiration date to backend call
-        await actorValue.share_file(newSharedWith[i].ic_principal, fileData.file_id, new Uint8Array(encryptedFileKey));
+        await actorValue.share_file(
+          newSharedWith[i].ic_principal,
+          fileData.file_id,
+          new Uint8Array(encryptedFileKey)
+        );
       }
     }
     // Go over all old entries and remove the ones that are no longer in the shared list
-    for(let i = 0; i < oldSharedWith.length; i++) {
-      let res = newSharedWith.find(obj => obj.ic_principal.compareTo(oldSharedWith[i].ic_principal) === 'eq');
-      if(!res) {
-        await actorValue.revoke_share(oldSharedWith[i].ic_principal, fileData.file_id);
+    for (let i = 0; i < oldSharedWith.length; i++) {
+      let res = newSharedWith.find(
+        (obj) =>
+          obj.ic_principal.compareTo(oldSharedWith[i].ic_principal) === "eq"
+      );
+      if (!res) {
+        await actorValue.revoke_share(
+          oldSharedWith[i].ic_principal,
+          fileData.file_id
+        );
       }
     }
     // Write back the new state, so the the UI updates
@@ -82,7 +122,7 @@
   }
 
   function onOpen(isOpen) {
-    if(isOpen){
+    if (isOpen) {
       // Keep the old version of the shared users
       oldSharedWith = fileData.shared_with.slice();
       // Copy the array and modify this list with the UI
@@ -94,9 +134,9 @@
   $: onOpen(isOpen);
 
   onMount(async () => {
-    if(actorValue) {
+    if (actorValue) {
       let res = await actorValue.get_users();
-      if('users' in res) {
+      if ("users" in res) {
         users = res.users;
       } else {
         users = [];
@@ -110,30 +150,49 @@
     <ModalHeader {toggle}>Share "{fileData.file_name}"</ModalHeader>
     <ModalBody>
       <form class="form-floating" on:submit|preventDefault={saveShare}>
-        <p>
-          Choose the people that have access to this file.
-        </p>
+        <p>Choose the people that have access to this file.</p>
         <FormGroup>
           <Label for="sharedWith">Shared with:</Label>
-          <SharedList sharedWithList={newSharedWith} removeUser={removePersonFromShare} />
-      </FormGroup>
+          <SharedList
+            sharedWithList={newSharedWith}
+            removeUser={removePersonFromShare}
+          />
+        </FormGroup>
         <FormGroup>
           <select bind:value={shareWithPerson} class="form-select">
             {#each users as user}
-              <option value={user.ic_principal}>{user.first_name} {user.last_name}</option>
+              <option value={user.ic_principal}
+                >{user.first_name} {user.last_name}</option
+              >
             {/each}
           </select>
         </FormGroup>
         <FormGroup>
-          <Button type="button" on:click={addPersonToShare} color="secondary">Add</Button>
+          <Button type="button" on:click={addPersonToShare} color="secondary"
+            >Add</Button
+          >
         </FormGroup>
         <FormGroup class="mb-4">
-          <Input id="c1" type="switch" label="Set Expiration Date?" bind:checked={hasExpirationDate} />
-          <Input id="expirationDate" class="form-control" type="date"  bind:value={expirationDate} disabled={!hasExpirationDate} required={hasExpirationDate}/>
+          <Input
+            id="c1"
+            type="switch"
+            label="Set Expiration Date?"
+            bind:checked={hasExpirationDate}
+          />
+          <Input
+            id="expirationDate"
+            class="form-control"
+            type="date"
+            bind:value={expirationDate}
+            disabled={!hasExpirationDate}
+            required={hasExpirationDate}
+          />
         </FormGroup>
         <FormGroup>
           {#if loading}
-            <button type="submit" class="btn btn-primary" disabled>Loading</button>
+            <button type="submit" class="btn btn-primary" disabled
+              >Loading</button
+            >
           {:else}
             <button type="submit" class="btn btn-primary">Save Changes</button>
           {/if}

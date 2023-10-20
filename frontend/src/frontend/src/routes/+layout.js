@@ -4,7 +4,7 @@ import {
   firstName,
   isAuthenticated,
   lastName,
-} from "$lib/shared/stores/auth.js";
+} from "$lib/shared/stores/auth";
 import { AuthClient } from "@dfinity/auth-client";
 import { createActor } from "../../../declarations/backend";
 

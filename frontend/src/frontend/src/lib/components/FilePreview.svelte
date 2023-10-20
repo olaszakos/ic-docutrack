@@ -22,7 +22,6 @@
     <embed
       width="100%"
       height="100%"
-      name="plugin"
       src="data:{file.dataType};base64,{file.data}"
     />
   {:else}

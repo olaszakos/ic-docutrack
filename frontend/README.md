@@ -1,5 +1,5 @@
 <p align="left" >
-  <img width="240"  src="./src/frontend/static/logo.png">
+  <img width="240"  src="./src/frontend/static/logo.svg">
 </p>
 
 # SvelteKit Dapp template

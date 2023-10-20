@@ -1,11 +1,11 @@
 <script>
-  import { Container } from "sveltestrap";
   import Navbar from "$lib/components/Navbar.svelte";
+  import "../app.css";
 </script>
 
-<div class="app">
+<div class="pb-20">
   <Navbar />
-  <Container class="pt-4">
+  <div class="max-w-5xl px-4 mx-auto pt-6">
     <slot />
-  </Container>
+  </div>
 </div>
