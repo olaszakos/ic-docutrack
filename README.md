@@ -23,6 +23,7 @@ pnpm install
 
 # Deploy the canisters.
 dfx deploy
+dfx deps pull
 dfx deps deploy
 ```
 
