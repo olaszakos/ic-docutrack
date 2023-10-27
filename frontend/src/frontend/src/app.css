@@ -11,7 +11,10 @@
 
 @layer components {
   .title-1 {
-    @apply text-title-1 font-book;
+    @apply text-title-1-mobile md:text-title-1 font-medium;
+  }
+  .title-2 {
+    @apply text-title-2 font-medium;
   }
 
   .body-1 {

@@ -12,6 +12,7 @@ export default {
     },
     fontSize: {
       "title-1": ["32px", "40px"],
+      "title-1-mobile": ["28px", "32px"],
       "title-2": ["16px", "21px"],
       "body-1": ["14px", "16px"],
       "body-2": ["11px", "16px"],

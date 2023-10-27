@@ -148,7 +148,7 @@
 </script>
 
 <div>
-  <Modal title={`Share "${fileData.file_name}"`} bind:isOpen>
+  <Modal title={`Share "${fileData.file_name || "Unnamed file"}"`} bind:isOpen>
     <form class="flex flex-col gap-4" on:submit|preventDefault={saveShare}>
       <p class="text-body-1 text-text-100">
         Choose the people that have access to this file.

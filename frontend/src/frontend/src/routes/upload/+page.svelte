@@ -286,7 +286,7 @@
 
   {#if ["not-uploaded", "uploading", "error"].includes(state.uploadState.type)}
     <form
-      class="flex flex-col gap-4 max-w-lg"
+      class="flex flex-col gap-4 max-w-lg mb-10"
       on:submit|preventDefault={handleUpload}
     >
       {#if state.uploadType.type === "self"}

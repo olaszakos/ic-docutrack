@@ -10,21 +10,15 @@
   import RequestModal from "$lib/components/RequestModal.svelte";
   import PlaceholderLogo from "$lib/components/icons/PlaceholderLogo.svelte";
   import type { file_metadata } from "../../../declarations/backend/backend.did";
-  import { formatUploadDate } from "$lib/dates";
+  import { formatUploadDate, formatUploadDateShort } from "$lib/dates";
 
   let data:
     | {
         name: string;
         access: string;
         uploadedAt: string;
-        file_id: string;
-        // items: (
-        //   | { url: URL; text: string }
-        //   | {
-        //       onClick: () => void;
-        //       text: string;
-        //     }
-        // )[];
+        uploadedAtShort: string;
+        file_id: bigint;
       }[]
     | null = null;
   let fileData: file_metadata[] = []; //{ file_id: null, file_name: "", shared_with: [] };
@@ -33,7 +27,7 @@
   let isOpenRequestModal = false;
   let shareFileData: file_metadata | undefined = undefined;
 
-  async function openShareModal(file_id) {
+  async function openShareModal(file_id: bigint) {
     if (fileData && fileData.length > 0) {
       shareFileData = fileData.find((obj) => {
         return obj.file_id === file_id;
@@ -78,7 +72,10 @@
             name: file.file_name,
             access: accessMessage,
             uploadedAt: formatUploadDate(file.file_status.uploaded.uploaded_at),
-            file_id: file.file_id.toString(),
+            uploadedAtShort: formatUploadDateShort(
+              file.file_status.uploaded.uploaded_at
+            ),
+            file_id: file.file_id,
           });
         }
       }
@@ -95,11 +92,19 @@
   // });
 
   // The vars are not persistent, hence they have to be reloaded `onMount`
-  onMount(async () => {
-    await syncBackend($actor!);
-  });
+  // onMount(async () => {
+  // await syncBackend($actor!);
+  // });
 
-  function goToDetails(file_id: string) {
+  $: {
+    if ($isAuthenticated && $actor) {
+      syncBackend($actor!);
+    } else {
+      data = [];
+    }
+  }
+
+  function goToDetails(file_id: bigint) {
     goto(`/details?fileId=${file_id}`);
   }
 </script>
@@ -120,15 +125,22 @@
       <h1 class="title-1">My Files</h1>
       {#if data && data.length > 0}
         <button
-          class="btn btn-accent"
+          class="hidden md:inline-block btn btn-accent"
           on:click={() => (isOpenRequestModal = true)}
           >Create new file request</button
         >
       {/if}
     </div>
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-background-200 p-4">
+      <button
+        class="btn btn-accent btn-full"
+        on:click={() => (isOpenRequestModal = true)}
+        >Create new file request</button
+      >
+    </div>
     <RequestModal bind:isOpen={isOpenRequestModal} />
     {#if data && data.length > 0}
-      <div class="bg-background-200 w-full rounded-2xl px-2">
+      <div class="hidden md:block bg-background-200 w-full rounded-2xl px-2">
         <table class="table-auto w-full border-spacing-y-2 border-separate">
           <thead class="">
             <tr class="body-2 text-text-200 text-left">
@@ -165,14 +177,45 @@
                   >
                     <ShareIcon />
                   </button>
-                  <!-- <a href="/details?fileId={file.file_id}" class="btn btn-icon">
-                  <DownloadIcon />
-                </a> -->
                 </td>
               </tr>
             {/each}
           </tbody>
         </table>
+      </div>
+      <div class="md:hidden flex flex-col gap-2">
+        {#each data as file}
+          <div class="bg-white rounded-xl py-3 px-4 flex flex-col">
+            <div class="flex justify-between items-center mb-3">
+              <span class="text-text-100 title-2">
+                {#if file.name}
+                  {file.name}
+                {:else}
+                  <span class="opacity-50">Unnamed file</span>
+                {/if}
+              </span>
+              <span>
+                <button
+                  on:click|preventDefault|stopPropagation={() =>
+                    openShareModal(file.file_id)}
+                  class="btn btn-icon"
+                >
+                  <ShareIcon />
+                </button>
+              </span>
+            </div>
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between items-center">
+                <span class="body-1 text-text-200">Access:</span>
+                <span class="body-1 text-text-100">{file.access}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="body-1 text-text-200">Uploaded at:</span>
+                <span class="body-1 text-text-100">{file.uploadedAtShort}</span>
+              </div>
+            </div>
+          </div>
+        {/each}
       </div>
     {:else if data && data.length == 0}
       <div

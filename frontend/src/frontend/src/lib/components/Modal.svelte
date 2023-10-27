@@ -16,6 +16,16 @@
     dispatch("cancelled");
   }
 
+  $: {
+    if (isOpen) {
+      document.querySelector("body")!.style.overflow = "hidden";
+      document.querySelector("body")!.style.touchAction = "none";
+    } else {
+      document.querySelector("body")!.style.overflow = "unset";
+      document.querySelector("body")!.style.touchAction = "unset";
+    }
+  }
+
   const small = mediaQueryStore("(max-width: 767px)");
 </script>
 
@@ -25,6 +35,8 @@
     in:fade={{ duration: 100 }}
     out:fade={{ duration: 100 }}
     on:click={cancel}
+    aria-label="Close Modal"
+    on:keypress={() => {}}
   />
 
   <div
@@ -33,7 +45,9 @@
       ? { duration: 200, y: 1000 }
       : { y: 0, duration: 200 }}
   >
-    <div class="panel px-6 pt-4 pb-10 md:pb-3 max-w-none lg:max-w-xl">
+    <div
+      class="bg-background-100 rounded-t-2xl md:panel px-6 pt-4 pb-10 md:pb-3 max-w-none lg:max-w-xl"
+    >
       <div class="flex justify-between mb-6">
         <h2 class="text-title-2 font-medium">{title}</h2>
         <button class="" on:click={cancel}>
