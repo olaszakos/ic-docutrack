@@ -8,23 +8,17 @@
     "image/jpg",
     "image/jpeg",
     "image/png",
+    "image/webp",
   ];
   $: previewStyle =
     file.dataType === "application/pdf" ? "--bs-aspect-ratio: 141%" : "";
   $: previewClass = file.dataType === "application/pdf" ? "ratio" : "";
 </script>
 
-<div
-  class="d-flex justify-content-center mb-3 {previewClass}"
-  style={previewStyle}
->
+<div class="flex items-center mb-3 {previewClass}" style={previewStyle}>
   {#if supportedDataTypes.includes(file.dataType)}
-    <embed
-      width="100%"
-      height="100%"
-      src="data:{file.dataType};base64,{file.data}"
-    />
+    <embed src="data:{file.dataType};base64,{file.data}" class="max-w-full" />
   {:else}
-    <p>No preview available.</p>
+    <p class="mt-10 text-text-200 body-1">No preview available.</p>
   {/if}
 </div>

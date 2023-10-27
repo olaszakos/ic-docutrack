@@ -15,6 +15,7 @@
   import RequestsIcon from "./icons/RequestsIcon.svelte";
   import LogoutIcon from "./icons/LogoutIcon.svelte";
   import { page } from "$app/stores";
+  import UploadIcon from "./icons/UploadIcon.svelte";
 
   let isOpen = false;
   let isOpenRegistrationModal = false;
@@ -123,7 +124,7 @@
             class="btn btn-ghost"
             class:btn-ghost-active={$page.route.id === "/upload"}
           >
-            <RequestsIcon />
+            <UploadIcon />
             Upload</a
           >
           <a

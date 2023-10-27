@@ -44,6 +44,7 @@ export default {
       },
       silver: {
         DEFAULT: "#C4C4E3",
+        700: "#8D95B4",
       },
       success: {
         DEFAULT: "#009D65",

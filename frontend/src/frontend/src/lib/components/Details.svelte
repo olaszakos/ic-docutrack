@@ -1,9 +1,6 @@
 <script>
   import { Row, Col, Table } from "sveltestrap";
 
-  /**
-   * @param {Number} file Contains the metadata of a file
-   */
   export let file = {};
 </script>
 

@@ -1,57 +1,108 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { onMount } from "svelte";
-  import FilePreview from "$lib/components/FilePreview.svelte";
-  import File from "$lib/file";
-  import { Alert } from "sveltestrap";
-  import Details from "$lib/components/Details.svelte";
-  import { actor, isAuthenticated } from "$lib/shared/stores/auth";
   import { arrayBufferToBase64 } from "$lib/buffer";
-  import type { ActorType } from "$lib/shared/actor";
+  import FilePreview from "$lib/components/FilePreview.svelte";
+  import ShareModal from "$lib/components/ShareModal.svelte";
+  import BackIcon from "$lib/components/icons/BackIcon.svelte";
+  import DownloadIcon from "$lib/components/icons/DownloadIcon.svelte";
+  import ShareIcon from "$lib/components/icons/ShareIcon.svelte";
+  import { formatUploadDate } from "$lib/dates";
+  import File from "$lib/file";
   import { enumIs } from "$lib/shared/enums";
+  import { actor, isAuthenticated } from "$lib/shared/stores/auth";
+  import { unreachable } from "$lib/shared/unreachable";
+  import { onMount } from "svelte";
+  import type { file_metadata } from "../../../../declarations/backend/backend.did";
 
   const fileId = parseInt($page.url.searchParams.get("fileId") || "");
 
-  let actorValue: ActorType | null = null;
-  let isAuthenticatedValue;
-  let errorMessage: string | null = null;
-  let download = "";
-  let file = {
-    name: "",
-    dataType: "",
-    data: "",
+  type State =
+    | {
+        type: "uninitialized";
+      }
+    | {
+        type: "loading";
+      }
+    | {
+        type: "loaded";
+        name: string;
+        dataType: string;
+        data: string;
+        uploadDate: string;
+        downloadUrl: string;
+        isOpenShareModal: boolean;
+        originalMetadata: file_metadata;
+      }
+    | {
+        type: "error";
+        error: string;
+      };
+
+  let state: State = {
+    type: "uninitialized",
   };
-  let loading = true;
 
-  actor.subscribe((value) => (actorValue = value));
-  isAuthenticated.subscribe((value) => (isAuthenticatedValue = value));
+  // let errorMessage: string | null = null;
+  // let download = "";
+  // let loading = true;
 
-  onMount(async () => {
-    if (isAuthenticatedValue && actorValue) {
-      let files = await actorValue.get_requests();
-      files = files.concat(await actorValue.get_shared_files());
+  $: {
+    if (!$isAuthenticated) {
+      state = {
+        type: "error",
+        error: "User must be authenticated and authorized",
+      };
+    } else {
+    }
+  }
+
+  function openShareDialog() {
+    if (state.type === "loaded") {
+      state = {
+        ...state,
+        isOpenShareModal: true,
+      };
+    } else {
+      initialize();
+    }
+  }
+
+  async function initialize() {
+    if ($isAuthenticated && $actor) {
+      state = {
+        type: "loading",
+      };
+
+      let files = await $actor.get_requests();
+      files = files.concat(await $actor.get_shared_files());
       console.log(files);
 
       const maybeFile = files.find((entry) => entry.file_id == BigInt(fileId));
 
-      if (maybeFile) {
-        console.log(maybeFile);
-
-        errorMessage = null;
-        file.name = maybeFile.file_name;
-      } else {
-        errorMessage = "File not found";
+      if (!maybeFile) {
+        state = {
+          type: "error",
+          error: "File not found",
+        };
         return;
       }
 
-      let downloadedFile = await actorValue.download_file(BigInt(fileId), 0n);
+      if (enumIs(maybeFile.file_status, "pending")) {
+        state = {
+          type: "error",
+          error: "File not uploaded",
+        };
+        return;
+      }
+
+      let downloadedFile = await $actor.download_file(BigInt(fileId), 0n);
       console.log(downloadedFile);
 
       if (enumIs(downloadedFile, "found_file")) {
         for (let i = 1; i < downloadedFile.found_file.num_chunks; i++) {
           console.log("Downloading chunk " + i);
 
-          const downloadedChunk = await actorValue.download_file(
+          const downloadedChunk = await $actor.download_file(
             BigInt(fileId),
             BigInt(i)
           );
@@ -67,31 +118,69 @@
 
             downloadedFile.found_file.contents = mergedArray;
           } else if (enumIs(downloadedChunk, "not_found_file")) {
-            errorMessage = "Chunk not found";
+            state = {
+              type: "error",
+              error: "Chunk not found",
+            };
             break;
           } else if (enumIs(downloadedChunk, "permission_error")) {
-            errorMessage = "Permission error";
+            // errorMessage = "Permission error";
+            state = {
+              type: "error",
+              error: "Permission error",
+            };
             break;
           }
         }
 
         let decryptedFile = await File.fromEncrypted(
-          file.name,
+          maybeFile.file_name,
           (downloadedFile.found_file.contents as Uint8Array).buffer,
           (downloadedFile.found_file.owner_key as Uint8Array).buffer
         );
-        file.dataType = downloadedFile.found_file.file_type;
-        file.data = arrayBufferToBase64(decryptedFile.contents);
-        download = `data:${file.dataType};base64,${file.data}`;
+
+        state = {
+          type: "loaded",
+          data: arrayBufferToBase64(decryptedFile.contents),
+          name: decryptedFile.name,
+          dataType: downloadedFile.found_file.file_type,
+          uploadDate: formatUploadDate(
+            maybeFile.file_status.uploaded.uploaded_at
+          ),
+          downloadUrl: `data:${
+            downloadedFile.found_file.file_type
+          };base64,${arrayBufferToBase64(decryptedFile.contents)}`,
+          isOpenShareModal: false,
+          originalMetadata: maybeFile,
+        };
+
+        // file.dataType = downloadedFile.found_file.file_type;
+        // file.data = arrayBufferToBase64(decryptedFile.contents);
+        // download = `data:${file.dataType};base64,${file.data}`;
       } else if (enumIs(downloadedFile, "not_found_file")) {
-        errorMessage = "File not found";
+        // errorMessage = "File not found";
+        state = {
+          type: "error",
+          error: "File not found",
+        };
       } else if (enumIs(downloadedFile, "permission_error")) {
-        errorMessage = "Permission error";
+        // errorMessage = "Permission error";
+        state = {
+          type: "error",
+          error: "Permission error",
+        };
       } else if (enumIs(downloadedFile, "not_uploaded_file")) {
-        errorMessage = "File not uploaded";
+        // errorMessage = "File not uploaded";
+        state = {
+          type: "error",
+          error: "File not uploaded",
+        };
       }
     }
-    loading = false;
+  }
+
+  onMount(async () => {
+    await initialize();
   });
 </script>
 
@@ -100,27 +189,48 @@
   <meta name="description" content="DocuTrack" />
 </svelte:head>
 <section>
-  {#if loading}
-    <h3>Loading...</h3>
-  {:else}
-    <h1>Details</h1>
-    {#if isAuthenticated && !errorMessage}
-      <Details {file} />
-      {#if file && file.data}
-        <h4>File Preview</h4>
-        <a class="btn btn-primary" href={download} download={file.name}
-          >Download</a
-        >
-        <p />
-        <FilePreview {file} />
+  <a href="/" class="btn btn-ghost">
+    <BackIcon /> Back to files
+  </a>
+  {#if state.type === "loading" || state.type === "uninitialized"}
+    <div class="title-1 mb-2 mt-3 text-text-200">Loading...</div>
+  {:else if state.type === "error"}
+    <h4>{state.error}</h4>
+  {:else if state.type === "loaded"}
+    <h1 class="title-1 mb-2 mt-3">
+      {#if state.name}
+        {state.name}
+      {:else}
+        <span class="opacity-50">Unnamed file</span>
       {/if}
-    {:else if errorMessage}
-      <h4>{errorMessage}</h4>
-    {:else}
-      <Alert color="warning">
-        <h4 class="alert-heading text-capitalize">warning</h4>
-        User must be authenticated and authorized.
-      </Alert>
-    {/if}
+    </h1>
+    <p class="mb-6 text-text-200">Uploaded: {state.uploadDate}</p>
+    <div class="mb-6 flex gap-2">
+      <a
+        href={state.downloadUrl}
+        class="btn btn-accent md:w-64"
+        download={state.name}
+      >
+        <DownloadIcon />
+        Download</a
+      >
+
+      <button class="btn btn-accent md:w-64" on:click={openShareDialog}>
+        <ShareIcon /> Share
+      </button>
+    </div>
+    <FilePreview
+      file={{
+        name: state.name,
+        data: state.data,
+        dataType: state.dataType,
+      }}
+    />
+    <ShareModal
+      bind:isOpen={state.isOpenShareModal}
+      bind:fileData={state.originalMetadata}
+    />
+  {:else}
+    {unreachable(state)}
   {/if}
 </section>

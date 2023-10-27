@@ -12,8 +12,8 @@
     height="13.25"
     rx="0.375"
     transform="rotate(45 14.4199 5.05377)"
-    fill="#5E6376"
-    stroke="#5E6376"
+    fill="currentColor"
+    stroke="currentColor"
     stroke-width="0.75"
   />
   <rect
@@ -23,8 +23,8 @@
     height="13.25"
     rx="0.375"
     transform="rotate(-45 5.04986 5.58398)"
-    fill="#5E6376"
-    stroke="#5E6376"
+    fill="currentColor"
+    stroke="currentColor"
     stroke-width="0.75"
   />
 </svg>

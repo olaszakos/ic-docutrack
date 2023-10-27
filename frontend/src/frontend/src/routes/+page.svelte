@@ -9,6 +9,8 @@
   import { goto } from "$app/navigation";
   import RequestModal from "$lib/components/RequestModal.svelte";
   import PlaceholderLogo from "$lib/components/icons/PlaceholderLogo.svelte";
+  import type { file_metadata } from "../../../declarations/backend/backend.did";
+  import { formatUploadDate } from "$lib/dates";
 
   let data:
     | {
@@ -25,20 +27,11 @@
         // )[];
       }[]
     | null = null;
-  let fileData: FileData[] = []; //{ file_id: null, file_name: "", shared_with: [] };
+  let fileData: file_metadata[] = []; //{ file_id: null, file_name: "", shared_with: [] };
 
   let isOpenShareModal = false;
   let isOpenRequestModal = false;
-  let shareFileData: FileData | undefined = undefined;
-  let actorValue;
-  let isAuthenticatedValue;
-
-  actor.subscribe((value) => {
-    actorValue = value;
-  });
-  isAuthenticated.subscribe((value) => {
-    isAuthenticatedValue = value;
-  });
+  let shareFileData: file_metadata | undefined = undefined;
 
   async function openShareModal(file_id) {
     if (fileData && fileData.length > 0) {
@@ -57,8 +50,8 @@
 
     if (backend) {
       fileData = [
-        ...(await actorValue.get_requests()),
-        ...(await actorValue.get_shared_files()),
+        ...(await $actor!.get_requests()),
+        ...(await $actor!.get_shared_files()),
       ];
 
       let newData: typeof data = [];
@@ -79,32 +72,13 @@
               accessMessage = "You & " + nShared + " others";
           }
           let detailsLink = new URL($page.url.origin + "/details");
-          detailsLink.searchParams.append("fileId", file.file_id);
-          const dateOptions: Intl.DateTimeFormatOptions = {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            timeZone: "CET",
-            hour12: false,
-          };
-          let uploadedAt = new Date(
-            Math.floor(Number(file.file_status.uploaded.uploaded_at) / 1000000)
-          );
+          detailsLink.searchParams.append("fileId", file.file_id.toString());
+
           newData.push({
             name: file.file_name,
             access: accessMessage,
-            uploadedAt: uploadedAt.toLocaleTimeString("en-CH", dateOptions),
-            file_id: file.file_id,
-            // items: [
-            //   { url: detailsLink, text: "Open" },
-            //   {
-            //     onClick: () => {
-            //       openShareModal(file.file_id);
-            //     },
-            //     text: "Share",
-            //   },
-            // ],
+            uploadedAt: formatUploadDate(file.file_status.uploaded.uploaded_at),
+            file_id: file.file_id.toString(),
           });
         }
       }
@@ -122,7 +96,7 @@
 
   // The vars are not persistent, hence they have to be reloaded `onMount`
   onMount(async () => {
-    await syncBackend(actorValue);
+    await syncBackend($actor!);
   });
 
   function goToDetails(file_id: string) {
@@ -139,9 +113,9 @@
   {#if shareFileData}
     <ShareModal bind:isOpen={isOpenShareModal} bind:fileData={shareFileData} />
   {/if}
-  {#if isAuthenticatedValue === null || data === null}
+  {#if $isAuthenticated === null || data === null}
     <h1 class="title-1">Loading...</h1>
-  {:else if isAuthenticatedValue}
+  {:else if $isAuthenticated}
     <div class="flex justify-between items-center mb-6">
       <h1 class="title-1">My Files</h1>
       {#if data && data.length > 0}
@@ -172,8 +146,13 @@
               >
                 <td
                   class="pl-4 bg-background-100 rounded-tl-xl rounded-bl-xl body-1"
-                  >{file.name}</td
                 >
+                  {#if file.name}
+                    {file.name}
+                  {:else}
+                    <span class="opacity-50">Unnamed file</span>
+                  {/if}
+                </td>
                 <td class="bg-background-100 body-1">{file.access}</td>
                 <td class="bg-background-100 body-1">{file.uploadedAt}</td>
                 <td
