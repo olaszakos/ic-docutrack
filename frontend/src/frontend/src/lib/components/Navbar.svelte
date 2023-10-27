@@ -17,7 +17,6 @@
   import { page } from "$app/stores";
   import UploadIcon from "./icons/UploadIcon.svelte";
   import { fade, fly } from "svelte/transition";
-  import CloseIcon from "./icons/CloseIcon.svelte";
 
   let isOpen = false;
   let isOpenRegistrationModal = false;

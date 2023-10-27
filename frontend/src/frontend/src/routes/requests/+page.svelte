@@ -1,12 +1,10 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-
   import RequestModal from "$lib/components/RequestModal.svelte";
   import type { ActorType } from "$lib/shared/actor";
   import { enumIs } from "$lib/shared/enums";
   import { actor, isAuthenticated } from "$lib/shared/stores/auth";
   import PlaceholderLogo from "$lib/components/icons/PlaceholderLogo.svelte";
-  import { formatUploadDate, formatUploadDateShort } from "$lib/dates";
+  import { formatUploadDate, formatUploadDateShort } from "$lib/shared/dates";
 
   let data:
     | {

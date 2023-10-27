@@ -1,23 +1,15 @@
 <script lang="ts">
-  // import { Modal, ModalBody, ModalHeader } from "sveltestrap";
+  import { default as crypto } from "$lib/crypto";
   import {
-    actor,
-    authClient,
-    firstName,
-    lastName,
+      actor,
+      firstName,
+      lastName,
   } from "$lib/shared/stores/auth";
   import Modal from "./Modal.svelte";
-  import { default as crypto } from "$lib/crypto";
-  import type { ActorType } from "$lib/shared/actor";
-  import type { AuthClient } from "@dfinity/auth-client";
 
   export let isOpen = false;
-  let actorValue: ActorType | null;
-  let authClientValue: AuthClient | null;
   let loading = false;
 
-  actor.subscribe((value) => (actorValue = value));
-  authClient.subscribe((value) => (authClientValue = value));
 
   async function setUser(e) {
     loading = true;
@@ -27,7 +19,7 @@
       const [key, value] = field;
       data[key] = value;
     }
-    await actorValue!.set_user(
+    await $actor!.set_user(
       data.firstName,
       data.lastName,
       new Uint8Array(await crypto.getLocalUserPublicKey())

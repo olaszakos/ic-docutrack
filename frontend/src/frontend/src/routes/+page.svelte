@@ -1,16 +1,14 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import { page } from "$app/stores";
   import { actor, isAuthenticated } from "$lib/shared/stores/auth";
   import ShareModal from "$lib/components/ShareModal.svelte";
-  import type { FileData } from "$lib/shared/types";
   import { enumIs } from "$lib/shared/enums";
   import ShareIcon from "$lib/components/icons/ShareIcon.svelte";
   import { goto } from "$app/navigation";
   import RequestModal from "$lib/components/RequestModal.svelte";
   import PlaceholderLogo from "$lib/components/icons/PlaceholderLogo.svelte";
   import type { file_metadata } from "../../../declarations/backend/backend.did";
-  import { formatUploadDate, formatUploadDateShort } from "$lib/dates";
+  import { formatUploadDate, formatUploadDateShort } from "$lib/shared/dates";
 
   let data:
     | {

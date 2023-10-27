@@ -6,7 +6,7 @@
   import BackIcon from "$lib/components/icons/BackIcon.svelte";
   import DownloadIcon from "$lib/components/icons/DownloadIcon.svelte";
   import ShareIcon from "$lib/components/icons/ShareIcon.svelte";
-  import { formatUploadDate } from "$lib/dates";
+  import { formatUploadDate } from "$lib/shared/dates";
   import File from "$lib/file";
   import { enumIs } from "$lib/shared/enums";
   import { actor, isAuthenticated } from "$lib/shared/stores/auth";
