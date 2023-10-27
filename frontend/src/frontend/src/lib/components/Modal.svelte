@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { fade } from "svelte/transition";
+  import { fade, fly } from "svelte/transition";
   import CloseIcon from "./icons/CloseIcon.svelte";
   import { createEventDispatcher } from "svelte";
+  import { mediaQueryStore } from "$lib/shared/stores/media";
 
   export let isOpen = false;
   export let title: string;
@@ -14,22 +15,25 @@
     isOpen = false;
     dispatch("cancelled");
   }
+
+  const small = mediaQueryStore("(max-width: 767px)");
 </script>
 
 {#if isOpen}
   <div
-    class="fixed inset-0 bg-black/50 z-10"
+    class="fixed inset-0 bg-black/50 z-20"
     in:fade={{ duration: 100 }}
     out:fade={{ duration: 100 }}
     on:click={cancel}
   />
 
   <div
-    class="fixed z-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-    in:fade={{ duration: 100 }}
-    out:fade={{ duration: 100 }}
+    class="fixed z-30 bottom-0 left-0 right-0 md:right-auto  md:top-1/2 md:left-1/2  md:-translate-x-1/2 md:-translate-y-1/2"
+    transition:fly={$small
+      ? { duration: 200, y: 1000 }
+      : { y: 0, duration: 200 }}
   >
-    <div class="panel px-6 pt-4 pb-3 max-w-xl">
+    <div class="panel px-6 pt-4 pb-10 md:pb-3 max-w-none lg:max-w-xl">
       <div class="flex justify-between mb-6">
         <h2 class="text-title-2 font-medium">{title}</h2>
         <button class="" on:click={cancel}>

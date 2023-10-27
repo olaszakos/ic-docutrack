@@ -26,7 +26,7 @@
   let authClientValue;
   let firstNameValue;
   let isAuthenticatedValue;
-  let showMobileMenu = true;
+  let showMobileMenu = false;
 
   actor.subscribe((value) => (actorValue = value));
   authClient.subscribe(async (value) => {
@@ -92,8 +92,8 @@
   <nav class="bg-background-200 rounded-b-3xl relative z-20">
     <div class="flex h-14 md:h-16 items-center max-w-5xl mx-auto px-4">
       <a href="/" class="shrink-0">
-        <img src="/logo.svg" alt="" class="hidden md:block" />
-        <img src="/mobile-logo.svg" alt="" class="md:hidden" />
+        <img src="/logo.svg" alt="" class="hidden lg:block" />
+        <img src="/mobile-logo.svg" alt="" class="lg:hidden" />
       </a>
       {#if firstNameValue}
         <div class="flex ml-2">
@@ -135,7 +135,7 @@
           />
         </button>
 
-        <div class="hidden md:flex gap-8">
+        <div class="hidden md:flex gap-2 lg:gap-8">
           <a
             href="/"
             class="btn btn-ghost"
@@ -171,7 +171,7 @@
 
   {#if showMobileMenu}
     <div
-      class="fixed inset-0 bg-black/50"
+      class="md:hidden fixed inset-0 bg-black/50"
       transition:fade={{ duration: 200 }}
     />
     <div
