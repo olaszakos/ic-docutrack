@@ -185,7 +185,10 @@
       </div>
       <div class="md:hidden flex flex-col gap-2">
         {#each data as file}
-          <div class="bg-white rounded-xl py-3 px-4 flex flex-col">
+          <a
+            class="bg-white rounded-xl py-3 px-4 flex flex-col"
+            href="/details?fileId={file.file_id}"
+          >
             <div class="flex justify-between items-center mb-3">
               <span class="text-text-100 title-2">
                 {#if file.name}
@@ -214,7 +217,7 @@
                 <span class="body-1 text-text-100">{file.uploadedAtShort}</span>
               </div>
             </div>
-          </div>
+          </a>
         {/each}
       </div>
     {:else if data && data.length == 0}
@@ -228,7 +231,7 @@
         <div class="pt-4 pb-8">
           <button
             class="btn btn-accent md:w-96"
-            on:click={() => (isOpenRequestModal = true)}
+            on:click|preventDefault={() => (isOpenRequestModal = true)}
             >Create new file request</button
           >
         </div>
