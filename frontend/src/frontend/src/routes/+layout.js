@@ -10,6 +10,8 @@ import { createActor } from "../../../declarations/backend";
 
 // Tell Sveltekit to not server-side render, otherwise IDB will not work
 export const ssr = false;
+export const prerender = true;
+export const trailingSlash = "always";
 
 let first = null;
 let last = null;
