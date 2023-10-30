@@ -17,12 +17,14 @@
   }
 
   $: {
-    if (isOpen) {
-      document.querySelector("body")!.style.overflow = "hidden";
-      document.querySelector("body")!.style.touchAction = "none";
-    } else {
-      document.querySelector("body")!.style.overflow = "unset";
-      document.querySelector("body")!.style.touchAction = "unset";
+    if (typeof window !== "undefined") {
+      if (isOpen) {
+        document.querySelector("body")!.style.overflow = "hidden";
+        document.querySelector("body")!.style.touchAction = "none";
+      } else {
+        document.querySelector("body")!.style.overflow = "unset";
+        document.querySelector("body")!.style.touchAction = "unset";
+      }
     }
   }
 
@@ -40,7 +42,7 @@
   />
 
   <div
-    class="fixed z-30 bottom-0 left-0 right-0 md:right-auto  md:top-1/2 md:left-1/2  md:-translate-x-1/2 md:-translate-y-1/2"
+    class="fixed z-30 bottom-0 left-0 right-0 md:right-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2"
     transition:fly={$small
       ? { duration: 200, y: 1000 }
       : { y: 0, duration: 200 }}

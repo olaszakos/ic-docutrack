@@ -107,10 +107,7 @@
   }
 </script>
 
-<svelte:head>
-  <title>Home</title>
-  <meta name="description" content="DocuTrack" />
-</svelte:head>
+
 
 <section>
   {#if shareFileData}

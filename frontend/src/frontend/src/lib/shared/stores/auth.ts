@@ -6,8 +6,8 @@ import type { ActorType } from "../actor";
 const canisterId = import.meta.env.VITE_BACKEND_CANISTER_ID;
 const host = import.meta.env.VITE_HOST;
 
-export const firstName = writable(null);
-export const lastName = writable(null);
+export const firstName = writable<string | null>(null);
+export const lastName = writable<string | null>(null);
 export const actor = writable<ActorType>(
   createActor(canisterId, { agentOptions: { host } })
 );

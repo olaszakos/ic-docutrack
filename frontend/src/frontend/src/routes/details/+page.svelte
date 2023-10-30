@@ -14,7 +14,11 @@
   import { onMount } from "svelte";
   import type { file_metadata } from "../../../../declarations/backend/backend.did";
 
-  const fileId = parseInt($page.url.searchParams.get("fileId") || "");
+
+function getFileId() {
+  return parseInt($page.url.searchParams.get("fileId") || "");
+}
+
 
   type State =
     | {
@@ -69,6 +73,9 @@
 
   async function initialize() {
     if ($isAuthenticated && $actor) {
+
+      const fileId = getFileId();
+
       state = {
         type: "loading",
       };
@@ -184,10 +191,6 @@
   });
 </script>
 
-<svelte:head>
-  <title>DocuTrack: Details</title>
-  <meta name="description" content="DocuTrack" />
-</svelte:head>
 <section>
   <a href="/" class="btn btn-ghost">
     <BackIcon /> Back to files

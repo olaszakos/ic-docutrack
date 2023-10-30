@@ -15,10 +15,7 @@ const config = {
   // for more information about preprocessors
   preprocess: vitePreprocess(),
   kit: {
-    adapter: adapter({
-      fallback: "index.html",
-      precompress: false,
-    }),
+    adapter: adapter(),
     files: {
       assets: filesPath("static"),
       hooks: {

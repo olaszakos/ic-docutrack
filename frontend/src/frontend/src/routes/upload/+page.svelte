@@ -45,17 +45,22 @@
 
   let state: State = { state: "uninitialized" };
 
-  const alias = $page.url.searchParams.get("alias") || "";
+      
+  function getAlias() {
+    return  $page.url.searchParams.get("alias") || "";
+  }
+
+  
   let files: FileList | null = null;
 
   $: {
-    if ($isAuthenticated === false && !alias) {
+    if ($isAuthenticated === false && !getAlias()) {
       goto("/");
     }
   }
 
   onMount(async () => {
-    if (!alias) {
+    if (!getAlias()) {
       if ($isAuthenticated) {
         state = {
           state: "upload",
@@ -70,7 +75,7 @@
         goto("/");
       }
     } else {
-      const fileInfo = await $actor!.get_alias_info(alias);
+      const fileInfo = await $actor!.get_alias_info(getAlias());
 
       if (enumIs(fileInfo, "Ok")) {
         state = {

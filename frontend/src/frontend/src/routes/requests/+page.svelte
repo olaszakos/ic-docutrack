@@ -64,10 +64,7 @@
   }
 </script>
 
-<svelte:head>
-  <title>Requests</title>
-  <meta name="description" content="DocuTrack" />
-</svelte:head>
+
 
 <section>
   {#if isAuthenticatedValue}
