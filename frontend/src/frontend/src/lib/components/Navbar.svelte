@@ -1,14 +1,4 @@
 <script lang="ts">
-  import {
-    Collapse,
-    Navbar,
-    NavbarToggler,
-    NavbarBrand,
-    Nav,
-    NavItem,
-    NavLink,
-  } from "sveltestrap";
-
   import RegistrationModal from "$lib/components/RegistrationModal.svelte";
 
   import { createActor } from "../../../../declarations/backend";
@@ -19,7 +9,14 @@
     firstName,
     lastName,
     isAuthenticated,
-  } from "$lib/shared/stores/auth.js";
+  } from "$lib/shared/stores/auth";
+  import LogoIcon from "./icons/LogoIcon.svelte";
+  import IconFile from "./icons/IconFile.svelte";
+  import RequestsIcon from "./icons/RequestsIcon.svelte";
+  import LogoutIcon from "./icons/LogoutIcon.svelte";
+  import { page } from "$app/stores";
+  import UploadIcon from "./icons/UploadIcon.svelte";
+  import { fade, fly } from "svelte/transition";
 
   let isOpen = false;
   let isOpenRegistrationModal = false;
@@ -28,6 +25,7 @@
   let authClientValue;
   let firstNameValue;
   let isAuthenticatedValue;
+  let showMobileMenu = false;
 
   actor.subscribe((value) => (actorValue = value));
   authClient.subscribe(async (value) => {
@@ -66,6 +64,7 @@
       authClient.set(authClientValue);
 
       let record = await actorValue.who_am_i();
+
       if ("unknown_user" in record) {
         isOpenRegistrationModal = true;
       } else {
@@ -88,43 +87,136 @@
   };
 </script>
 
-{#if isAuthenticatedValue !== null}
-  <Navbar color="light" light expand="md">
-    <NavbarBrand href="/">DocuTrack</NavbarBrand>
-    <NavbarToggler on:click={() => (isOpen = !isOpen)} />
-    <Collapse {isOpen} navbar expand="md" on:update={handleUpdate}>
-      {#if firstNameValue}
-        <Nav class="ms-md-3">
-          <NavItem>
-            Hi, {firstNameValue}
-          </NavItem>
-        </Nav>
-        <Nav class="ms-auto" navbar>
-          <NavItem>
-            <NavLink href="/">My Files</NavLink>
-          </NavItem>
+<nav class="bg-background-200 rounded-b-3xl relative z-20">
+  <div class="flex h-14 md:h-16 items-center max-w-5xl mx-auto px-4">
+    <a href="/" class="shrink-0">
+      <img src="/logo.svg" alt="" class="hidden lg:block" />
+      <img src="/mobile-logo.svg" alt="" class="lg:hidden" />
+    </a>
+    {#if firstNameValue}
+      <div class="flex ml-2">
+        <div class="bg-accent-100/10">
+          <div class="bg-background-200 w-3 h-full rounded-br-lg" />
+        </div>
+        <div
+          class="bg-accent-100/10 p-2 rounded-lg rounded-bl-none text-accent-100 body-1"
+        >
+          Hi, {firstNameValue}
+        </div>
+      </div>
+    {/if}
+    <div class="flex-1" />
+    {#if $isAuthenticated === false}
+      <button class="btn btn-accent" on:click={handleLogin}>
+        <LogoIcon />
+        Login
+      </button>
+    {:else if $isAuthenticated === true}
+      <button
+        class="flex flex-col items-stretch gap-[5px] md:hidden w-5 h-5"
+        on:click={() => (showMobileMenu = !showMobileMenu)}
+      >
+        <span
+          class="h-[2px] bg-accent-100 rounded-full transition-transform {showMobileMenu
+            ? 'rotate-45 translate-y-[7px]'
+            : 'rotate-0'}"
+        />
+        <span
+          class="h-[2px] bg-accent-100 rounded-full transition-opacity {showMobileMenu
+            ? 'opacity-0'
+            : 'opacity-100'}"
+        />
+        <span
+          class="h-[2px] bg-accent-100 rounded-full transition-transform {showMobileMenu
+            ? '-rotate-45 translate-y-[-7px]'
+            : 'rotate-0'}"
+        />
+      </button>
 
-          <NavItem>
-            <NavLink href="/upload">Upload</NavLink>
-          </NavItem>
+      <div class="hidden md:flex gap-2 lg:gap-8">
+        <a
+          href="/"
+          class="btn btn-ghost"
+          class:btn-ghost-active={$page.route.id === "/"}
+        >
+          <IconFile />
+          Files</a
+        >
+        <a
+          href="/upload"
+          class="btn btn-ghost"
+          class:btn-ghost-active={$page.route.id === "/upload"}
+        >
+          <UploadIcon />
+          Upload</a
+        >
+        <a
+          href="/requests"
+          class="btn btn-ghost"
+          class:btn-ghost-active={$page.route.id === "/requests"}
+        >
+          <RequestsIcon />
+          Requests</a
+        >
+        <button on:click={handleLogout} class="btn btn-ghost">
+          <LogoutIcon />
+          Logout</button
+        >
+      </div>
+    {/if}
+  </div>
+</nav>
 
-          <NavItem>
-            <NavLink href="/requests">Requests</NavLink>
-          </NavItem>
-
-          <NavItem>
-            <NavLink on:click={handleLogout}>Logout</NavLink>
-          </NavItem>
-        </Nav>
-      {:else}
-        <Nav class="ms-auto" navbar>
-          <NavItem>
-            <!-- Add link to the II login -->
-            <NavLink on:click={handleLogin}>Login</NavLink>
-          </NavItem>
-        </Nav>
-      {/if}
-    </Collapse>
-    <RegistrationModal isOpen={isOpenRegistrationModal} />
-  </Navbar>
+{#if showMobileMenu}
+  <div
+    class="md:hidden fixed inset-0 bg-black/50"
+    transition:fade={{ duration: 200 }}
+  />
+  <div
+    transition:fly={{ duration: 300, x: 1000, opacity: 1 }}
+    class="fixed md:hidden inset-0 bg-background-300 z-10 pt-16"
+  >
+    <div class="p-4 flex flex-col gap-4 h-full">
+      <a
+        href="/"
+        class="btn btn-ghost justify-start"
+        class:btn-ghost-active={$page.route.id === "/"}
+        on:click={() => (showMobileMenu = false)}
+      >
+        <IconFile />
+        Files</a
+      >
+      <a
+        href="/upload"
+        class="btn btn-ghost justify-start"
+        class:btn-ghost-active={$page.route.id === "/upload"}
+        on:click={() => (showMobileMenu = false)}
+      >
+        <UploadIcon />
+        Upload</a
+      >
+      <a
+        href="/requests"
+        class="btn btn-ghost justify-start"
+        class:btn-ghost-active={$page.route.id === "/requests"}
+        on:click={() => (showMobileMenu = false)}
+      >
+        <RequestsIcon />
+        Requests</a
+      >
+      <div class="flex-1" />
+      <button
+        on:click={() => {
+          handleLogout();
+          showMobileMenu = false;
+        }}
+        class="btn btn-ghost justify-start"
+      >
+        <LogoutIcon />
+        Logout</button
+      >
+    </div>
+  </div>
 {/if}
+
+<RegistrationModal isOpen={isOpenRegistrationModal} />

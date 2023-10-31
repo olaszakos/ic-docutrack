@@ -17,3 +17,5 @@ node_modules
 # Frontend
 **/build/*
 **/.svelte-kit/*
+
+.DS_Store

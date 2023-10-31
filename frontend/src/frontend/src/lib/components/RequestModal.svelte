@@ -1,20 +1,21 @@
 <script lang="ts">
-  import { Button, Modal, ModalBody, ModalHeader } from "sveltestrap";
   import { page } from "$app/stores";
+  import { actor } from "$lib/shared/stores/auth";
+  import { createEventDispatcher } from "svelte";
+  import Modal from "./Modal.svelte";
+  import CopyIcon from "./icons/CopyIcon.svelte";
 
   export let isOpen = false;
-  const toggle = () => (isOpen = !isOpen);
 
-  import { actor } from "$lib/shared/stores/auth.js";
-  import { createActor } from "../../../../declarations/backend";
-  import { default as crypto } from "$lib/crypto";
-
-  let actorValue: object;
-  let requestLink: URL;
+  let requestLink: URL | null = null;
   let loading: boolean = false;
   let requestName: string = "";
+  let copied = false;
 
-  actor.subscribe((value) => (actorValue = value));
+  const dispatch = createEventDispatcher<{
+    "request-created": void;
+    "request-completed": void;
+  }>();
 
   async function updateRequestUrl(e) {
     loading = true;
@@ -28,89 +29,98 @@
     // Do not request new url when there is already one
     if (data.requestName && !data.requestLink) {
       requestName = data.requestName;
-      const alias = await actorValue.request_file(data.requestName);
+      const alias = await $actor!.request_file(data.requestName);
       requestLink = new URL($page.url.origin + "/upload");
       requestLink.searchParams.append("alias", alias);
     }
     loading = false;
+
+    dispatch("request-created");
+  }
+
+  function close() {
+    if (requestLink) {
+      dispatch("request-completed");
+    }
+
+    isOpen = false;
+    requestName = "";
+    requestLink = null;
   }
 
   async function copyText() {
-    var copyText = "";
     if (requestLink) {
-      copyText = requestLink;
+      await navigator.clipboard.writeText(requestLink.toString());
+      copied = true;
     }
-    await navigator.clipboard.writeText(copyText);
-    // Alert the copied text
-    alert("Copied!");
   }
 </script>
 
 <div>
-  <Button color="primary" on:click={toggle}>Request File</Button>
-  <Modal {isOpen} {toggle}>
-    <ModalHeader {toggle}>Create Request</ModalHeader>
-    <ModalBody>
-      <form class="form-floating" on:submit|preventDefault={updateRequestUrl}>
-        <div class="form-floating mb-3">
-          <input
-            type="text"
-            required={true}
-            class="form-control"
-            id="requestName"
-            placeholder="Enter your input"
-            name="requestName"
-          />
-          <label for="requestName">Request Name</label>
-        </div>
-        <div class="form-floating mb-3">
-          {#if requestLink}
+  <Modal bind:isOpen title="Create Request" on:cancelled={close}>
+    <form class="w-full md:w-96" on:submit|preventDefault={updateRequestUrl}>
+      <div class="">
+        <label for="requestName" class="input-label">Request Name</label>
+
+        <input
+          type="text"
+          required={true}
+          class="input"
+          id="requestName"
+          placeholder="Enter your input"
+          name="requestName"
+          disabled={!!requestLink}
+          readonly={!!requestLink}
+        />
+      </div>
+      <div class="mt-3">
+        {#if requestLink}
+          <div class="flex justify-between items-center">
+            <label for="requestLink" class="input-label"> Request Link </label>
+            {#if copied}
+              <span class="text-text-100 body-1"> Copied! </span>
+            {/if}
+          </div>
+          <div class="relative">
             <input
               type="text"
-              class="form-control"
+              class="input pr-10"
               id="requestLink"
               placeholder=""
               name="requestLink"
               value={requestLink}
               readonly
             />
-            <span>
-              <a
-                href="mailto:?subject=Share your file&body=Please share a file with me here: {requestLink}"
-                >Email me!</a
-              >
-            </span>
-          {:else}
-            <input
-              type="text"
-              class="form-control"
-              id="requestLink"
-              placeholder=""
-              name="requestLink"
-              readonly
-            />
-          {/if}
-          <label for="requestLink">Request Link</label>
-        </div>
-        <div class="form-floating mb-3">
-          <button
-            class="btn btn-outline-secondary"
-            type="button"
-            on:click={copyText}>Copy Link</button
+            <button
+              class="btn btn-icon absolute right-0 top-1/2 -translate-y-1/2"
+              on:click={copyText}
+            >
+              <CopyIcon />
+            </button>
+          </div>
+          <div class="mt-4">
+            <a
+              href="mailto:?subject=Share your file&body=Please share a file with me here: {requestLink}"
+              class="text-accent-100">Send in email</a
+            >
+          </div>
+        {/if}
+      </div>
+      <div class=" mt-10">
+        {#if loading}
+          <button type="submit" class="btn btn-accent btn-full btn-" disabled
+            >Generating link...</button
           >
-          {#if loading}
-            <button type="submit" class="btn btn-primary" disabled
-              >Loading</button
-            >
-          {:else if !loading && requestLink}
-            <button type="submit" class="btn btn-primary" disabled
-              >Submit</button
-            >
-          {:else}
-            <button type="submit" class="btn btn-primary">Submit</button>
-          {/if}
-        </div>
-      </form>
-    </ModalBody>
+        {:else if !loading && requestLink}
+          <button type="button" class="btn btn-accent btn-full" on:click={close}
+            >Request sent, close this window</button
+          >
+        {:else}
+          <button type="submit" class="btn btn-accent btn-full"
+            >Generate link</button
+          >
+        {/if}
+      </div>
+    </form>
   </Modal>
 </div>

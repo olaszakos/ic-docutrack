@@ -25,8 +25,8 @@
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@rollup/plugin-inject": "^5.0.4",
-    "@sveltejs/adapter-static": "^1.0.6",
-    "@sveltejs/kit": "^1.25.2",
+    "@sveltejs/adapter-static": "^2.0.3",
+    "@sveltejs/kit": "^1.27.2",
     "@types/node": "^18.18.4",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
@@ -44,6 +44,7 @@
     "svelte": "^3.59.2",
     "svelte-check": "^2.10.3",
     "svelte-preprocess": "^4.10.7",
+    "tailwindcss": "^3.3.3",
     "tslib": "^2.6.2",
     "typescript": "^4.9.5",
     "vite": "^4.4.11"
@@ -54,7 +55,6 @@
     "@dfinity/auth-client": "^0.15.7",
     "@dfinity/candid": "^0.15.7",
     "@dfinity/principal": "^0.15.7",
-    "@macfja/svelte-persistent-store": "^2.4.0",
-    "sveltestrap": "^5.11.2"
+    "@macfja/svelte-persistent-store": "^2.4.0"
   }
 }
