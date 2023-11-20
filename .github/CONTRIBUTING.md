@@ -3,15 +3,7 @@
 Thank you for your interest in contributing to this repo.
 By participating in this project, you agree to abide by our [Code of Conduct](./CODE_OF_CONDUCT.md).
 
-As a member of the community, you are invited and encouraged to contribute by submitting issues, offering suggestions for improvements, adding review comments to existing pull requests, or creating new pull requests to fix issues.
-
-All contributions to DFINITY documentation and the developer community are respected and appreciated.
-Your participation is an important factor in the success of the Internet Computer.
-
-## Contents of this repository
-
-This repository contains source code for the canister interface description language—often referred to as Candid or IDL. Candid provides a common language for specifying the signature of a canister service and interacting with canisters running on the
-Internet Computer.
+As a member of the community, you are invited and encouraged to contribute by submitting issues, offering suggestions for improvements, adding review comments to existing pull requests, or creating new pull requests to fix issues. All contributions are respected and appreciated.
 
 ## Before you contribute
 
@@ -22,7 +14,7 @@ Before contributing, consider the following:
 
 - If you want to report an issue, click **Issues**.
 
-- If you have more general questions related to Candid and its use, post a message to the [community forum](https://forum.dfinity.org/) or submit a [support request](mailto://support@dfinity.org).
+- If you have more general questions about the Internet Computer, post a message to the [community forum](https://forum.dfinity.org/) or submit a [support request](mailto://support@dfinity.org).
 
 - If you are reporting a bug, provide as much information about the problem as possible.
 
