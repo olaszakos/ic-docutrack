@@ -9,6 +9,7 @@
   import type { get_alias_info_response } from "../../../../declarations/backend/backend.did";
   import { actor, isAuthenticated } from "$lib/shared/stores/auth.js";
   import { goto } from "$app/navigation";
+  import pLimit from 'p-limit';
 
   const chunkSize = 2000000;
 
@@ -44,6 +45,36 @@
       };
 
   let state: State = { state: "uninitialized" };
+
+  /**
+   * Uploads all chunks of a file, with the exception of the first chunk.
+   * The first chunk is uploaded in a special way and is done separately
+   * prior to calling this method.
+   * 
+   * @param content
+   * @param fileId
+   */
+  async function uploadChunks(content: Uint8Array, fileId: bigint) {
+    const numChunks = Math.ceil(content.length / chunkSize);
+
+    // Create upload pool, supporting upto 5 parallel uploads.
+    const uploadPool = pLimit(5);
+
+    // Prepare upload requests.
+    const uploadRequests = Array.from({ length: numChunks - 1 }, (_, i) => i + 1)
+      .map((i) => uploadPool(async () => {
+        console.log(`Uploading chunk ${i}`);
+        await $actor!.upload_file_continue({
+          file_id: fileId,
+          contents: content.subarray(i * chunkSize, (i + 1) * chunkSize),
+          chunk_id: BigInt(i),
+        });
+        console.log(`Uploaded chunk ${i}`);
+      }));
+
+    await Promise.all(uploadRequests);
+    console.log("File upload complete");
+  }
 
       
   function getAlias() {
@@ -183,15 +214,7 @@
         });
 
         if (enumIs(res, "Ok")) {
-          for (let i = 1; i < numChunks; i++) {
-            // Upload chunks
-            console.log("uploading chunk " + i);
-            await $actor!.upload_file_continue({
-              file_id: state.uploadType.fileInfo.file_id,
-              contents: content.subarray(i * chunkSize, (i + 1) * chunkSize),
-              chunk_id: BigInt(i),
-            });
-          }
+          await uploadChunks(content, state.uploadType.fileInfo.file_id);
 
           state = {
             ...state,
@@ -219,15 +242,7 @@
         });
         console.log("Uploaded file with id " + fileId);
 
-        for (let i = 1; i < numChunks; i++) {
-          // Upload chunks
-          console.log("uploading chunk " + i);
-          await $actor!.upload_file_continue({
-            file_id: fileId,
-            contents: content.subarray(i * chunkSize, (i + 1) * chunkSize),
-            chunk_id: BigInt(i),
-          });
-        }
+        await uploadChunks(content, fileId);
 
         state = {
           ...state,

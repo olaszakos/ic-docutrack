@@ -55,6 +55,7 @@
     "@dfinity/auth-client": "^0.15.7",
     "@dfinity/candid": "^0.15.7",
     "@dfinity/principal": "^0.15.7",
-    "@macfja/svelte-persistent-store": "^2.4.0"
+    "@macfja/svelte-persistent-store": "^2.4.0",
+    "p-limit": "^5.0.0"
   }
 }
