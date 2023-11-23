@@ -22,23 +22,26 @@ pub fn upload_file(
             let alias = alias.clone();
             if num_chunks == 1 {
                 file.content = FileContent::Uploaded {
-                    contents,
                     file_type,
                     owner_key,
                     shared_keys,
+                    num_chunks,
                 };
             } else {
-                let mut content = BTreeMap::new();
-                content.insert(0, contents);
                 file.content = FileContent::PartiallyUploaded {
-                    contents: content,
                     file_type,
                     owner_key,
                     shared_keys,
                     num_chunks,
                 };
             }
+
             file.metadata.uploaded_at = Some(get_time());
+
+            // Add file contents to stable store.
+            let chunk_id = 0;
+            state.file_contents.insert((file_id, chunk_id), contents);
+
             alias
         }
         FileContent::Uploaded { .. } | FileContent::PartiallyUploaded { .. } => {
@@ -109,14 +112,15 @@ mod test {
                         uploaded_at: Some(get_time()),
                     },
                     content: FileContent::Uploaded {
-                        contents: vec![1,2,3],
                         file_type: "jpeg".to_string(),
                         owner_key: vec![1,2,3],
                         shared_keys: BTreeMap::new(),
+                        num_chunks: 1,
                     }
                 }
             }
         );
+        assert_eq!(state.file_contents.get(&(file_id, 0)), Some(vec![1, 2, 3]));
 
         // The alias index is empty.
         assert!(state.file_alias_index.is_empty());

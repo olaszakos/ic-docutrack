@@ -57,6 +57,7 @@ dependencies = [
  "ciborium",
  "ic-cdk",
  "ic-cdk-macros",
+ "ic-stable-structures",
  "maplit",
  "rand",
  "rand_chacha",
@@ -399,6 +400,12 @@ dependencies = [
  "serde_tokenstream",
  "syn",
 ]
+
+[[package]]
+name = "ic-stable-structures"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be4867a1d9f232e99ca68682161d1fc67dff9501f4f1bf42d69a9358289ad0f8"
 
 [[package]]
 name = "ic0"

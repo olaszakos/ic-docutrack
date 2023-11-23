@@ -22,39 +22,40 @@ pub use user_info::set_user_info;
 pub fn upload_file_continue(request: UploadFileContinueRequest, state: &mut State) {
     // Update the file's contents.
     let file_id = request.file_id;
+    let chunk_id = request.chunk_id;
 
     let updated_file_data = match state.file_data.remove(&file_id) {
         Some(mut file) => {
             let updated_contents = match file.content {
                 FileContent::PartiallyUploaded {
                     num_chunks,
-                    mut contents,
                     file_type,
                     owner_key,
                     shared_keys,
                 } => {
                     // Add the chunk to the partially uploaded file.
-                    assert!(request.chunk_id < num_chunks, "invalid chunk id");
+                    assert!(chunk_id < num_chunks, "invalid chunk id");
                     assert!(
-                        !contents.contains_key(&request.chunk_id),
+                        !state.file_contents.contains_key(&(file_id, chunk_id)),
                         "chunk already uploaded"
                     );
 
                     // Add the chunk.
-                    contents.insert(request.chunk_id, request.contents);
+                    state
+                        .file_contents
+                        .insert((file_id, chunk_id), request.contents);
 
-                    if contents.len() == num_chunks as usize {
+                    if state.num_chunks_uploaded(file_id) == num_chunks {
                         // The file is complete. Assemble the file.
                         FileContent::Uploaded {
-                            contents: contents.into_values().flatten().collect(),
                             file_type,
                             owner_key,
                             shared_keys,
+                            num_chunks,
                         }
                     } else {
                         FileContent::PartiallyUploaded {
                             num_chunks,
-                            contents,
                             file_type,
                             owner_key,
                             shared_keys,
@@ -124,9 +125,6 @@ mod test {
                     },
                     content: FileContent::PartiallyUploaded {
                         num_chunks: 3,
-                        contents: btreemap! {
-                            0 => vec![1, 2, 3],
-                        },
                         file_type: "image/jpeg".to_string(),
                         owner_key: vec![1,2,3],
                         shared_keys: BTreeMap::new()
@@ -134,6 +132,8 @@ mod test {
                 }
             }
         );
+        assert_eq!(state.file_contents.get(&(file_id, 0)), Some(vec![1, 2, 3]));
+        assert_eq!(state.num_chunks_uploaded(file_id), 1);
 
         // Upload the second chunk.
         upload_file_continue(
@@ -159,10 +159,6 @@ mod test {
                     },
                     content: FileContent::PartiallyUploaded {
                         num_chunks: 3,
-                        contents: btreemap! {
-                            0 => vec![1, 2, 3],
-                            1 => vec![4, 5, 6],
-                        },
                         file_type: "image/jpeg".to_string(),
                         owner_key: vec![1,2,3],
                         shared_keys: BTreeMap::new()
@@ -170,6 +166,9 @@ mod test {
                 }
             }
         );
+        assert_eq!(state.file_contents.get(&(file_id, 0)), Some(vec![1, 2, 3]));
+        assert_eq!(state.file_contents.get(&(file_id, 1)), Some(vec![4, 5, 6]));
+        assert_eq!(state.num_chunks_uploaded(file_id), 2);
 
         // Upload the third and final chunk.
         upload_file_continue(
@@ -194,13 +193,20 @@ mod test {
                         uploaded_at: Some(get_time()),
                     },
                     content: FileContent::Uploaded {
-                        contents: vec![1,2,3,4,5,6,7,8,9,10],
                         file_type: "image/jpeg".to_string(),
                         owner_key: vec![1,2,3],
-                        shared_keys: BTreeMap::new()
+                        shared_keys: BTreeMap::new(),
+                        num_chunks: 3
                     }
                 }
             }
         );
+        assert_eq!(state.file_contents.get(&(file_id, 0)), Some(vec![1, 2, 3]));
+        assert_eq!(state.file_contents.get(&(file_id, 1)), Some(vec![4, 5, 6]));
+        assert_eq!(
+            state.file_contents.get(&(file_id, 2)),
+            Some(vec![7, 8, 9, 10])
+        );
+        assert_eq!(state.num_chunks_uploaded(file_id), 3);
     }
 }

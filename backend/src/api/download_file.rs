@@ -2,11 +2,7 @@ pub use crate::ceil_division;
 use crate::{FileContent, FileData, FileDownloadResponse, State};
 use ic_cdk::export::candid::Principal;
 
-const CHUNK_SIZE: usize = 2_000_000;
-
 fn get_file_data(s: &State, file_id: u64, chunk_id: u64) -> FileDownloadResponse {
-    let chunk_id: usize = chunk_id as usize;
-
     // unwrap is safe because we already know the file exists
     let this_file = s.file_data.get(&file_id).unwrap();
     match &this_file.content {
@@ -14,17 +10,15 @@ fn get_file_data(s: &State, file_id: u64, chunk_id: u64) -> FileDownloadResponse
             FileDownloadResponse::NotUploadedFile
         }
         FileContent::Uploaded {
-            contents,
             file_type,
             owner_key,
             shared_keys: _,
+            num_chunks,
         } => FileDownloadResponse::FoundFile(FileData {
-            contents: contents
-                [chunk_id * CHUNK_SIZE..std::cmp::min((chunk_id + 1) * CHUNK_SIZE, contents.len())]
-                .to_vec(),
+            contents: s.file_contents.get(&(file_id, chunk_id)).unwrap(),
             file_type: file_type.clone(),
             owner_key: owner_key.clone(),
-            num_chunks: ceil_division(contents.len(), CHUNK_SIZE) as u64,
+            num_chunks: *num_chunks,
         }),
     }
 }
@@ -35,8 +29,6 @@ fn get_shared_file_data(
     chunk_id: u64,
     user: Principal,
 ) -> FileDownloadResponse {
-    let chunk_id: usize = chunk_id as usize;
-
     // unwrap is safe because we already know the file exists
     let this_file = s.file_data.get(&file_id).unwrap();
     match &this_file.content {
@@ -44,17 +36,15 @@ fn get_shared_file_data(
             FileDownloadResponse::NotUploadedFile
         }
         FileContent::Uploaded {
-            contents,
             file_type,
             owner_key: _,
             shared_keys,
+            num_chunks,
         } => FileDownloadResponse::FoundFile(FileData {
-            contents: contents
-                [chunk_id * CHUNK_SIZE..std::cmp::min((chunk_id + 1) * CHUNK_SIZE, contents.len())]
-                .to_vec(),
+            contents: s.file_contents.get(&(file_id, chunk_id)).unwrap(),
             file_type: file_type.clone(),
             owner_key: shared_keys.get(&user).unwrap().clone(),
-            num_chunks: ceil_division(contents.len(), CHUNK_SIZE) as u64,
+            num_chunks: *num_chunks,
         }),
     }
 }

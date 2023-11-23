@@ -1,17 +1,24 @@
 mod aliases;
 pub mod api;
+mod memory;
 mod upgrade;
 use crate::aliases::{AliasGenerator, Randomness};
 use ic_cdk::export::{candid::CandidType, Principal};
+use ic_stable_structures::StableBTreeMap;
+use memory::Memory;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::ops::Bound::{Excluded, Included};
 pub use upgrade::{post_upgrade, pre_upgrade};
 
 thread_local! {
     /// Initialize the state randomness with the current time.
     static STATE: RefCell<State> = RefCell::new(State::new(&get_randomness_seed()[..]));
 }
+
+type FileId = u64;
+type ChunkId = u64;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct User {
@@ -83,14 +90,13 @@ pub enum FileContent {
         alias: String,
     },
     Uploaded {
-        contents: Vec<u8>,
+        num_chunks: u64,
         file_type: String,
         owner_key: Vec<u8>,
         shared_keys: BTreeMap<Principal, Vec<u8>>,
     },
     PartiallyUploaded {
         num_chunks: u64,
-        contents: BTreeMap<u64, Vec<u8>>,
         file_type: String,
         owner_key: Vec<u8>,
         shared_keys: BTreeMap<Principal, Vec<u8>>,
@@ -156,6 +162,10 @@ pub struct State {
     /// Mapping between a user's principal and the list of files that are shared with them.
     pub file_shares: BTreeMap<Principal, Vec<u64>>,
 
+    /// The contents of the file (stored in stable memory).
+    #[serde(skip, default = "init_file_contents")]
+    pub file_contents: StableBTreeMap<(FileId, ChunkId), Vec<u8>, Memory>,
+
     // Generates aliases for file requests.
     #[serde(skip, default = "init_alias_generator")]
     alias_generator: AliasGenerator,
@@ -179,7 +189,15 @@ impl State {
             file_owners: BTreeMap::new(),
             file_shares: BTreeMap::new(),
             alias_generator: AliasGenerator::new(Randomness::try_from(rand_seed).unwrap()),
+            file_contents: init_file_contents(),
         }
+    }
+
+    /// Returns the number of uploaded chunks for the given file id
+    pub(crate) fn num_chunks_uploaded(&self, file_id: u64) -> u64 {
+        self.file_contents
+            .range((Included((file_id, 0u64)), Excluded(((file_id + 1), 0u64))))
+            .count() as u64
     }
 }
 
@@ -269,4 +287,8 @@ pub fn ceil_division(dividend: usize, divisor: usize) -> usize {
     } else {
         dividend / divisor + 1
     }
+}
+
+fn init_file_contents() -> StableBTreeMap<(FileId, ChunkId), Vec<u8>, Memory> {
+    StableBTreeMap::init(crate::memory::get_file_contents_memory())
 }

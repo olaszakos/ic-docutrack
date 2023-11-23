@@ -193,8 +193,8 @@
     const encFile = await fileToEncrypt.encrypt();
     const content = new Uint8Array(encFile);
 
-    if (content.length > 20 * 1024 * 1024) {
-      alert("File size is limited to 20MiB in this PoC\n(larger files could be supported in a production version).");
+    if (content.length > 100 * 1024 * 1024) {
+      alert("File size is limited to 100MiB in this PoC\n(larger files could be supported in a production version).");
       return;
     }
 

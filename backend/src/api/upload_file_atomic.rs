@@ -24,23 +24,26 @@ pub fn upload_file_atomic(
     let content = if request.num_chunks == 1 {
         // File is uploaded in one chunk.
         FileContent::Uploaded {
-            contents: request.content,
+            num_chunks: request.num_chunks,
             file_type: request.file_type,
             owner_key: request.owner_key,
             shared_keys: BTreeMap::new(),
         }
     } else {
         // File will be uploaded in multiple chunks.
-        let mut contents = BTreeMap::new();
-        contents.insert(0, request.content);
         FileContent::PartiallyUploaded {
             num_chunks: request.num_chunks,
-            contents,
             file_type: request.file_type,
             owner_key: request.owner_key,
             shared_keys: BTreeMap::new(),
         }
     };
+
+    // Add file contents to stable store.
+    let chunk_id = 0;
+    state
+        .file_contents
+        .insert((file_id, chunk_id), request.content);
 
     let old_value = state.file_data.insert(
         file_id,
@@ -116,14 +119,15 @@ mod test {
                         uploaded_at: Some(get_time()),
                     },
                     content: FileContent::Uploaded {
-                        contents: vec![1,2,3],
                         file_type: "image/jpeg".to_string(),
                         owner_key: vec![1,2,3],
-                        shared_keys: BTreeMap::new()
+                        shared_keys: BTreeMap::new(),
+                        num_chunks: 1,
                     }
                 }
             }
         );
+        assert_eq!(state.file_contents.get(&(0, 0)), Some(vec![1, 2, 3]));
 
         // The alias index is empty.
         assert!(state.file_alias_index.is_empty());
