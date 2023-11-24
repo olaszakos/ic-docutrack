@@ -195,6 +195,7 @@
 
     if (content.length > 100 * 1024 * 1024) {
       alert("File size is limited to 100MiB in this PoC\n(larger files could be supported in a production version).");
+      state.uploadState.type = "not-uploaded";
       return;
     }
 
