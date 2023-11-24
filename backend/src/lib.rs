@@ -49,6 +49,8 @@ pub struct FileMetadata {
 pub enum FileStatus {
     #[serde(rename = "pending")]
     Pending { alias: String, requested_at: u64 },
+    #[serde(rename = "partially_uploaded")]
+    PartiallyUploaded,
     #[serde(rename = "uploaded")]
     Uploaded {
         uploaded_at: u64,

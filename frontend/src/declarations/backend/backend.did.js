@@ -27,6 +27,7 @@ export const idlFactory = ({ IDL }) => {
     'Err' : IDL.Variant({ 'not_found' : IDL.Null }),
   });
   const file_status = IDL.Variant({
+    'partially_uploaded' : IDL.Null,
     'pending' : IDL.Record({ 'alias' : IDL.Text, 'requested_at' : IDL.Nat64 }),
     'uploaded' : IDL.Record({
       'document_key' : IDL.Vec(IDL.Nat8),

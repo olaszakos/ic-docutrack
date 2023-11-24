@@ -47,9 +47,7 @@ pub fn get_file_status(state: &State, file_id: u64) -> FileStatus {
             alias: alias.clone(),
             requested_at: file.metadata.requested_at,
         },
-        FileContent::PartiallyUploaded { .. } => {
-            todo!()
-        }
+        FileContent::PartiallyUploaded { .. } => FileStatus::PartiallyUploaded,
         FileContent::Uploaded {
             owner_key: own_key, ..
         } => FileStatus::Uploaded {

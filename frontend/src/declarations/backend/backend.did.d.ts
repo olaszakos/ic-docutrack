@@ -16,9 +16,8 @@ export interface file_metadata {
   'shared_with' : Array<user>,
   'file_id' : file_id,
 }
-export type file_status = {
-    'pending' : { 'alias' : string, 'requested_at' : bigint }
-  } |
+export type file_status = { 'partially_uploaded' : null } |
+  { 'pending' : { 'alias' : string, 'requested_at' : bigint } } |
   {
     'uploaded' : {
       'document_key' : Uint8Array | number[],
